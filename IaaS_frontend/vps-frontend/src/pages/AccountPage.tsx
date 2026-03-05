@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User, Lock, Users, Send } from 'lucide-react';
 import { useProjectsStore } from '../store/projectsStore';
 import './AccountPage.css';
@@ -207,6 +208,7 @@ function InviteModal({ onClose }: { onClose: () => void }) {
 }
 
 export function AccountPage() {
+  const navigate = useNavigate();
   const [inviteOpen, setInviteOpen] = useState(false);
 
   return (
@@ -314,7 +316,7 @@ export function AccountPage() {
                 <div className="acct-security-row-label">SSH-ключи</div>
                 <div className="acct-security-row-status">2 активных ключа</div>
               </div>
-              <button type="button" className="acct-link-btn">
+              <button type="button" className="acct-link-btn" onClick={() => navigate('/ssh-keys')}>
                 Управлять
               </button>
             </li>

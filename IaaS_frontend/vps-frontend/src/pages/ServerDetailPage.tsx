@@ -100,18 +100,46 @@ interface FirewallPortDef {
   protocol: string;
   source: string;
   description: string;
+  extendedInfo: string;
 }
 
 const FIREWALL_PORT_DEFS: FirewallPortDef[] = [
-  { port: 22,    label: 'SSH',         protocol: 'TCP', source: '0.0.0.0/0', description: 'SSH доступ' },
-  { port: 80,    label: 'HTTP',        protocol: 'TCP', source: '0.0.0.0/0', description: 'Веб-трафик' },
-  { port: 443,   label: 'HTTPS',       protocol: 'TCP', source: '0.0.0.0/0', description: 'Защищённый веб-трафик' },
-  { port: 3306,  label: 'MySQL',       protocol: 'TCP', source: '10.0.0.0/8', description: 'База данных MySQL' },
-  { port: 5432,  label: 'PostgreSQL',  protocol: 'TCP', source: '10.0.0.0/8', description: 'База данных PostgreSQL' },
-  { port: 6379,  label: 'Redis',       protocol: 'TCP', source: '10.0.0.0/8', description: 'Кэш Redis' },
-  { port: 8000,  label: 'App (8000)',  protocol: 'TCP', source: '0.0.0.0/0', description: 'Приложение' },
-  { port: 8080,  label: 'App (8080)',  protocol: 'TCP', source: '0.0.0.0/0', description: 'Приложение (альт.)' },
-  { port: 51820, label: 'WireGuard',   protocol: 'UDP', source: '0.0.0.0/0', description: 'VPN WireGuard' },
+  {
+    port: 22, label: 'SSH', protocol: 'TCP', source: '0.0.0.0/0', description: 'SSH доступ',
+    extendedInfo: 'Secure Shell — стандартный протокол удалённого управления сервером. Используется для входа в терминал, передачи файлов (SCP/SFTP) и туннелирования. Рекомендуется ограничить источник конкретными IP-адресами вместо 0.0.0.0/0.',
+  },
+  {
+    port: 80, label: 'HTTP', protocol: 'TCP', source: '0.0.0.0/0', description: 'Веб-трафик',
+    extendedInfo: 'HyperText Transfer Protocol — незашифрованный веб-трафик. Необходим для работы веб-сайтов и часто используется для перенаправления на HTTPS. Nginx и Apache слушают этот порт по умолчанию.',
+  },
+  {
+    port: 443, label: 'HTTPS', protocol: 'TCP', source: '0.0.0.0/0', description: 'Защищённый веб-трафик',
+    extendedInfo: 'HyperText Transfer Protocol Secure — шифрованный веб-трафик поверх TLS/SSL. Основной порт для безопасных сайтов и API. Требует наличия SSL-сертификата (например, Let\'s Encrypt).',
+  },
+  {
+    port: 3306, label: 'MySQL', protocol: 'TCP', source: '10.0.0.0/8', description: 'База данных MySQL',
+    extendedInfo: 'Стандартный порт СУБД MySQL и MariaDB. Открывать публично крайне не рекомендуется — доступ следует ограничить внутренней сетью или конкретными IP-адресами приложений.',
+  },
+  {
+    port: 5432, label: 'PostgreSQL', protocol: 'TCP', source: '10.0.0.0/8', description: 'База данных PostgreSQL',
+    extendedInfo: 'Стандартный порт СУБД PostgreSQL. Как и MySQL, не должен быть открыт для всего интернета. Используйте SSH-туннель или ограничьте источник внутренними адресами.',
+  },
+  {
+    port: 6379, label: 'Redis', protocol: 'TCP', source: '10.0.0.0/8', description: 'Кэш Redis',
+    extendedInfo: 'Порт сервера Redis — in-memory хранилища данных. Redis не имеет аутентификации по умолчанию, поэтому публичный доступ крайне опасен. Используйте только в приватной сети.',
+  },
+  {
+    port: 8000, label: 'App (8000)', protocol: 'TCP', source: '0.0.0.0/0', description: 'Приложение',
+    extendedInfo: 'Популярный порт для dev-серверов и backend-приложений: Django (runserver), FastAPI, Node.js и других. Часто используется как альтернатива порту 80 для тестирования без root-привилегий.',
+  },
+  {
+    port: 8080, label: 'App (8080)', protocol: 'TCP', source: '0.0.0.0/0', description: 'Приложение (альт.)',
+    extendedInfo: 'Альтернативный HTTP-порт, широко используемый прокси-серверами, Apache Tomcat, Jenkins и другими сервисами. Часто применяется в Docker-контейнерах как проброс порта 80.',
+  },
+  {
+    port: 51820, label: 'WireGuard', protocol: 'UDP', source: '0.0.0.0/0', description: 'VPN WireGuard',
+    extendedInfo: 'Стандартный порт WireGuard VPN. Использует UDP для быстрой и безопасной передачи данных. Необходим для подключения клиентов к VPN-серверу, развёрнутому на этой машине.',
+  },
 ];
 
 interface LiveMetrics {
@@ -191,6 +219,7 @@ export function ServerDetailPage() {
   }, [projects, vmId]);
 
   const [selectedTab, setSelectedTab] = useState<ServerDetailTab>('dashboard');
+  const [portInfoOpen, setPortInfoOpen] = useState<number | null>(null);
   const [backupOffsetMinutes, setBackupOffsetMinutes] = useState(15);
   const [backupCreateSnapshot, setBackupCreateSnapshot] = useState(true);
   const [travelPhase, setTravelPhase] = useState<TravelPhase>('idle');
@@ -718,6 +747,7 @@ export function ServerDetailPage() {
                     <div className="pn-ports-list">
                       {FIREWALL_PORT_DEFS.map((def) => {
                         const isOpen = vm.portsOpen.includes(def.port);
+                        const infoOpen = portInfoOpen === def.port;
                         return (
                           <div
                             key={def.port}
@@ -726,6 +756,22 @@ export function ServerDetailPage() {
                             <div className="pn-port-info">
                               <span className="pn-port-label">{def.label}</span>
                               <span className="pn-port-number">{def.port}/{def.protocol}</span>
+                              <div className="pn-port-info-wrap">
+                                <button
+                                  type="button"
+                                  className="pn-port-info-btn"
+                                  aria-label={`Информация о порте ${def.port}`}
+                                  onClick={() => setPortInfoOpen(infoOpen ? null : def.port)}
+                                >
+                                  i
+                                </button>
+                                {infoOpen && (
+                                  <div className="pn-port-tooltip">
+                                    <div className="pn-port-tooltip-title">{def.label} — порт {def.port}</div>
+                                    <div className="pn-port-tooltip-text">{def.extendedInfo}</div>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                             <span className="pn-fw-source">{def.source}</span>
                             <span className="pn-fw-desc">{def.description}</span>

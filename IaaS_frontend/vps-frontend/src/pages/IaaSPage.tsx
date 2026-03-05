@@ -1,9 +1,11 @@
 import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import sparklesSymbol from '../assets/symbols/sparkles.svg';
 import { useAssistantStore } from '../assistant/store';
 import './IaaSPage.css';
 
 export function IaaSPage() {
+  const navigate = useNavigate();
   const { open, isOpen, sendEvent, currentStepId } = useAssistantStore();
 
   // Auto-open Oleg on landing
@@ -30,8 +32,8 @@ export function IaaSPage() {
         Облако, которое разворачивает ваш проект вместе с вами
       </p>
       <div className="iaas-hero-actions" data-tour="hero-cta">
-        <button type="button" className="iaas-btn iaas-btn-secondary">
-          Войти
+        <button type="button" className="iaas-btn iaas-btn-secondary" onClick={() => navigate('/account')}>
+          Аккаунт
         </button>
         <button
           type="button"

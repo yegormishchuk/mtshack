@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAssistantStore } from '../assistant/store';
 import minimumServerImg from '../assets/servers/minimum.png';
 import standardServerImg from '../assets/servers/standard.png';
@@ -235,6 +236,7 @@ const ChevronRightIcon = () => (
 );
 
 export function BuildPage() {
+  const navigate = useNavigate();
   const plansGridRef = useRef<HTMLDivElement | null>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -807,6 +809,7 @@ export function BuildPage() {
                   type="button"
                   className="build-plan-btn build-plan-btn-primary build-summary-pay-btn"
                   disabled={!selectedPlan || !selectedOs}
+                  onClick={() => navigate('/billing')}
                 >
                   {isOlegActive ? '🚀 Создать сервер' : 'Перейти к оплате'}
                 </button>
