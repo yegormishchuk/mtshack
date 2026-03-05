@@ -116,4 +116,6 @@ export const api = {
     request<unknown>('PATCH', `/resources/${encodeURIComponent(instanceName)}`, payload),
   getResourceUsage: (instanceName: string) =>
     request<unknown>('GET', `/resources/${encodeURIComponent(instanceName)}/usage`),
+  getMetrics: (instanceName: string) =>
+    request<unknown>('GET', `/resources/${encodeURIComponent(instanceName)}/metrics`),
 };

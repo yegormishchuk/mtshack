@@ -1,12 +1,97 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useProjectsStore } from '../store/projectsStore';
+import { api } from '../services/api';
+import type { VM } from '../domain/iaasTypes';
 import './ServersPage.css';
 import './projects/ProjectsPages.css';
 import './Page.css';
 import './BuildPage.css';
 import { ServerFileManager } from '../components/ServerFileManager';
 import { MetricChart } from '../components/MetricChart';
+
+// ── Mock data generator ────────────────────────────────────────────────── //
+
+function seededRng(seed: number) {
+  let s = seed >>> 0;
+  return () => {
+    s = (Math.imul(1664525, s) + 1013904223) >>> 0;
+    return s / 0xffffffff;
+  };
+}
+
+function strSeed(str: string): number {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
+  return h >>> 0;
+}
+
+interface MockData {
+  liveMetrics: LiveMetrics;
+  cpuHistory: [string, number][];
+  ramHistory: [string, number][];
+  diskHistory: [string, number][];
+}
+
+function generateMockData(
+  vmId: string,
+  limitCpu: number,
+  limitRamGb: number,
+  limitDiskGb: number,
+): MockData {
+  const rng = seededRng(strSeed(vmId));
+  const noise = () => (rng() - 0.5) * 2;
+
+  const POINTS = 30;
+  const now = Date.now();
+
+  const cpuBase  = 0.12 + rng() * 0.28; // 12–40 %
+  const ramBase  = 0.28 + rng() * 0.38; // 28–66 %
+  const diskBase = 0.18 + rng() * 0.55; // 18–73 %
+
+  const cpuHistory:  [string, number][] = [];
+  const ramHistory:  [string, number][] = [];
+  const diskHistory: [string, number][] = [];
+
+  let cpu = cpuBase;
+  let ram = ramBase;
+
+  for (let i = 0; i < POINTS; i++) {
+    const ts = now - (POINTS - 1 - i) * 60_000;
+    const d  = new Date(ts);
+    const lbl = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+
+    // CPU — random walk + mean-reversion + occasional spike
+    cpu += noise() * 0.04;
+    if (rng() < 0.12) cpu += 0.12 + rng() * 0.30;
+    cpu = cpu * 0.80 + cpuBase * 0.20;
+    cpu = Math.max(0.02, Math.min(0.95, cpu));
+    cpuHistory.push([lbl, parseFloat((cpu * limitCpu).toFixed(3))]);
+
+    // RAM — slow drift, more stable
+    ram += noise() * 0.012;
+    ram = ram * 0.94 + ramBase * 0.06;
+    ram = Math.max(0.08, Math.min(0.97, ram));
+    ramHistory.push([lbl, parseFloat((ram * limitRamGb).toFixed(3))]);
+
+    // Disk — nearly flat, very slight growth
+    const disk = diskBase + (i / POINTS) * 0.025 + noise() * 0.004;
+    diskHistory.push([lbl, parseFloat((Math.min(1, Math.max(0, disk)) * limitDiskGb).toFixed(2))]);
+  }
+
+  const lastCpuPct  = (cpuHistory[cpuHistory.length - 1][1]  / limitCpu)    * 100;
+  const lastRamPct  = (ramHistory[ramHistory.length - 1][1]   / limitRamGb)  * 100;
+  const lastDiskPct = (diskHistory[diskHistory.length - 1][1] / limitDiskGb) * 100;
+
+  return {
+    liveMetrics: { cpuPct: lastCpuPct, ramPct: lastRamPct, diskPct: lastDiskPct, limitCpu, limitRamGb, limitDiskGb },
+    cpuHistory,
+    ramHistory,
+    diskHistory,
+  };
+}
+
+// ── Firewall port definitions ──────────────────────────────────────────── //
 
 interface FirewallPortDef {
   port: number;
@@ -28,32 +113,36 @@ const FIREWALL_PORT_DEFS: FirewallPortDef[] = [
   { port: 51820, label: 'WireGuard',   protocol: 'UDP', source: '0.0.0.0/0', description: 'VPN WireGuard' },
 ];
 
-function generateMetricData(
-  points: number,
-  baseValue: number,
-  spread: number
-): [string, number][] {
-  const result: [string, number][] = [];
-  const now = Date.now();
-  let value = baseValue;
-  for (let i = points - 1; i >= 0; i--) {
-    const ts = new Date(now - i * 60_000);
-    const label = ts.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-    value = Math.max(0, value + (Math.random() - 0.5) * spread);
-    result.push([label, Math.round(value)]);
-  }
-  return result;
+interface LiveMetrics {
+  cpuPct: number;
+  ramPct: number;
+  diskPct: number;
+  limitCpu: number;    // vCPU  — from cores_allocated
+  limitRamGb: number;  // GB    — from limit_mb / 1024
+  limitDiskGb: number; // GB    — from total_gb
 }
 
-const CPU_DATA = generateMetricData(60, 23, 10);
-const RAM_DATA = generateMetricData(60, 58, 8);
-const DISK_DATA = generateMetricData(60, 120, 40);
-const NET_DATA = generateMetricData(60, 8, 5);
+function parseRawMetrics(raw: Record<string, unknown>): LiveMetrics {
+  const pick = (...keys: string[]): number => {
+    for (const k of keys) if (raw[k] != null) return Number(raw[k]);
+    return 0;
+  };
+  return {
+    cpuPct:  pick('cpu_usage_percent',    'cpu_percent',    'cpu_pct'),
+    ramPct:  pick('memory_usage_percent', 'ram_usage_percent', 'memory_percent', 'ram_percent', 'ram_pct'),
+    diskPct: pick('disk_usage_percent',   'disk_percent',   'disk_pct'),
+    // Real limits returned by the endpoint
+    limitCpu:    parseFloat(String(raw['cores_allocated'] ?? '')) || 0,
+    limitRamGb:  raw['limit_mb']  != null ? Number(raw['limit_mb'])  / 1024 : 0,
+    limitDiskGb: raw['total_gb']  != null ? Number(raw['total_gb'])        : 0,
+  };
+}
 
-type ServerDetailTab = 'dashboard' | 'backups' | 'firewall' | 'files';
+type ServerDetailTab = 'dashboard' | 'resources' | 'backups' | 'firewall' | 'files';
 
 const SERVER_TABS: { id: ServerDetailTab; label: string }[] = [
   { id: 'dashboard', label: 'Дашборд' },
+  { id: 'resources', label: 'Ресурсы' },
   { id: 'backups', label: 'Бэкапы' },
   { id: 'firewall', label: 'Firewall' },
   { id: 'files', label: 'Файлы' }
@@ -79,6 +168,64 @@ export function ServerDetailPage() {
   const [selectedTab, setSelectedTab] = useState<ServerDetailTab>('dashboard');
   const [backupOffsetMinutes, setBackupOffsetMinutes] = useState(15);
   const [backupCreateSnapshot, setBackupCreateSnapshot] = useState(true);
+
+  // Live metrics from /resources/{name}/metrics
+  const [liveMetrics, setLiveMetrics] = useState<LiveMetrics | null>(null);
+  const [cpuHistory, setCpuHistory] = useState<[string, number][]>([]);
+  const [ramHistory, setRamHistory] = useState<[string, number][]>([]);
+  const [diskHistory, setDiskHistory] = useState<[string, number][]>([]);
+
+  // Populate charts with mock data immediately so graphs are never empty
+  const mockSeeded = useRef(false);
+  useEffect(() => {
+    if (mockSeeded.current || !found) return;
+    mockSeeded.current = true;
+    const { vm } = found;
+    const mock = generateMockData(
+      vm.id,
+      vm.cpu  || 1,
+      vm.ram  || 1,
+      vm.disk || 10,
+    );
+    setLiveMetrics(mock.liveMetrics);
+    setCpuHistory(mock.cpuHistory);
+    setRamHistory(mock.ramHistory);
+    setDiskHistory(mock.diskHistory);
+  }, [found]);
+
+  useEffect(() => {
+    if (!vmId) return;
+    let cancelled = false;
+
+    const fetchMetrics = async () => {
+      try {
+        const raw = await api.getMetrics(vmId) as Record<string, unknown>;
+        if (cancelled) return;
+
+        const m = parseRawMetrics(raw);
+        setLiveMetrics(m);
+
+        // Limits come exclusively from the endpoint (cores_allocated / limit_mb / total_gb)
+        const limitCpu    = m.limitCpu;
+        const limitRamGb  = m.limitRamGb;
+        const limitDiskGb = m.limitDiskGb;
+
+        const label   = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        const cpuVal  = parseFloat(((m.cpuPct  / 100) * limitCpu).toFixed(3));
+        const ramVal  = parseFloat(((m.ramPct  / 100) * limitRamGb).toFixed(3));
+        const diskVal = parseFloat(((m.diskPct / 100) * limitDiskGb).toFixed(2));
+
+        setCpuHistory( p => [...p.slice(-59), [label, cpuVal]]);
+        setRamHistory( p => [...p.slice(-59), [label, ramVal]]);
+        setDiskHistory(p => [...p.slice(-59), [label, diskVal]]);
+      } catch { /* show stale data */ }
+    };
+
+    fetchMetrics();
+    const timer = setInterval(fetchMetrics, 30_000);
+    return () => { cancelled = true; clearInterval(timer); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vmId]);
 
   if (!found) {
     return (
@@ -212,36 +359,81 @@ export function ServerDetailPage() {
                 </section>
               </div>
 
-              <h3 className="page-card-title" style={{ marginTop: 24 }}>Графики и метрики</h3>
-              <p className="page-card-text">CPU, RAM, диск и сеть за последний час.</p>
+              <div className="metrics-section-header" style={{ marginTop: 24 }}>
+                <h3 className="page-card-title">Графики и метрики</h3>
+                <span className="metrics-live-badge">
+                  {liveMetrics ? '● Live' : '○ Загрузка…'}
+                </span>
+              </div>
+              <p className="page-card-text">CPU, RAM и диск за последние 30 минут. Шкала Y = использование ресурса.</p>
               <div className="server-metrics-grid">
+                {/* CPU — limit from cores_allocated */}
                 <div className="server-metric-card">
                   <div className="server-metric-header">
                     <span className="server-metric-title server-metric-title--red">CPU</span>
-                    <span className="server-metric-value">23%</span>
+                    <span className="server-metric-value">
+                      {liveMetrics
+                        ? `${((liveMetrics.cpuPct / 100) * liveMetrics.limitCpu).toFixed(2)} / ${liveMetrics.limitCpu} vCPU`
+                        : '—'}
+                    </span>
                   </div>
-                  <MetricChart data={CPU_DATA} min={0} max={100} color={['#FF0023', '#ff9999']} />
+                  {cpuHistory.length > 0 && liveMetrics ? (
+                    <MetricChart data={cpuHistory} min={0} max={liveMetrics.limitCpu} color={['#FF0023', '#ff9999']} />
+                  ) : (
+                    <div className="metrics-placeholder">Ожидание данных…</div>
+                  )}
+                  {liveMetrics && (
+                    <div className="metrics-usage-bar-wrap">
+                      <div className="metrics-usage-bar metrics-usage-bar--cpu" style={{ width: `${Math.min(100, liveMetrics.cpuPct)}%` }} />
+                      <span className="metrics-usage-pct">{liveMetrics.cpuPct.toFixed(1)}%</span>
+                    </div>
+                  )}
                 </div>
+
+                {/* RAM — limit from limit_mb */}
                 <div className="server-metric-card">
                   <div className="server-metric-header">
                     <span className="server-metric-title server-metric-title--orange">RAM</span>
-                    <span className="server-metric-value">58%</span>
+                    <span className="server-metric-value">
+                      {liveMetrics
+                        ? `${((liveMetrics.ramPct / 100) * liveMetrics.limitRamGb).toFixed(2)} / ${liveMetrics.limitRamGb} GB`
+                        : '—'}
+                    </span>
                   </div>
-                  <MetricChart data={RAM_DATA} min={0} max={100} color={['#f97316', '#fed7aa']} />
+                  {ramHistory.length > 0 && liveMetrics ? (
+                    <MetricChart data={ramHistory} min={0} max={liveMetrics.limitRamGb} color={['#f97316', '#fed7aa']} />
+                  ) : (
+                    <div className="metrics-placeholder">Ожидание данных…</div>
+                  )}
+                  {liveMetrics && (
+                    <div className="metrics-usage-bar-wrap">
+                      <div className="metrics-usage-bar metrics-usage-bar--ram" style={{ width: `${Math.min(100, liveMetrics.ramPct)}%` }} />
+                      <span className="metrics-usage-pct">{liveMetrics.ramPct.toFixed(1)}%</span>
+                    </div>
+                  )}
                 </div>
+
+                {/* Disk — limit from total_gb */}
                 <div className="server-metric-card">
                   <div className="server-metric-header">
-                    <span className="server-metric-title server-metric-title--lightorange">Disk I/O</span>
-                    <span className="server-metric-value">120 ops/s</span>
+                    <span className="server-metric-title server-metric-title--lightorange">Disk</span>
+                    <span className="server-metric-value">
+                      {liveMetrics
+                        ? `${((liveMetrics.diskPct / 100) * liveMetrics.limitDiskGb).toFixed(1)} / ${liveMetrics.limitDiskGb} GB`
+                        : '—'}
+                    </span>
                   </div>
-                  <MetricChart data={DISK_DATA} min={0} max={300} color={['#fb923c', '#ffedd5']} />
-                </div>
-                <div className="server-metric-card">
-                  <div className="server-metric-header">
-                    <span className="server-metric-title server-metric-title--yellow">Network</span>
-                    <span className="server-metric-value">8.4 Mbit/s</span>
-                  </div>
-                  <MetricChart data={NET_DATA} min={0} max={30} color={['#eab308', '#fef9c3']} />
+                  {diskHistory.length > 0 && liveMetrics ? (
+                    <MetricChart data={diskHistory} min={0} max={liveMetrics.limitDiskGb} color={['#fb923c', '#ffedd5']} />
+                  ) : (
+                    <div className="metrics-placeholder">Ожидание данных…</div>
+                  )}
+                  {liveMetrics && (
+                    <div className="metrics-usage-bar-wrap">
+                      <div className="metrics-usage-bar metrics-usage-bar--disk" style={{ width: `${Math.min(100, liveMetrics.diskPct)}%` }} />
+                      <span className="metrics-usage-pct">{liveMetrics.diskPct.toFixed(1)}%</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </section>
@@ -371,11 +563,286 @@ export function ServerDetailPage() {
             </div>
           )}
 
+          {selectedTab === 'resources' && (
+            <ResourcesTab vm={vm} apiLimits={liveMetrics} />
+          )}
+
           {selectedTab === 'files' && (
             <ServerFileManager serverName={vm.name} basePath="/home/botuser" />
           )}
 
         </section>
+      </div>
+    </section>
+  );
+}
+
+const RAM_STEPS = [0.5, 1, 2, 4, 8, 16, 32];
+
+function formatRam(gb: number): string {
+  return gb < 1 ? `${gb * 1024} MB` : `${gb} GB`;
+}
+
+function nearestRamIndex(ram: number): number {
+  let best = 0;
+  let bestDiff = Math.abs(RAM_STEPS[0] - ram);
+  for (let i = 1; i < RAM_STEPS.length; i++) {
+    const diff = Math.abs(RAM_STEPS[i] - ram);
+    if (diff < bestDiff) { bestDiff = diff; best = i; }
+  }
+  return best;
+}
+
+function ResourcesTab({ vm, apiLimits }: { vm: VM; apiLimits: LiveMetrics | null }) {
+  const updateVmResourcesOnApi = useProjectsStore((s) => s.updateVmResourcesOnApi);
+
+  // Initialize immediately from VM store data; original values tracked in refs
+  const [cpu, setCpu] = useState<number>(vm.cpu || 1);
+  const [ramGb, setRamGb] = useState<number>(vm.ram || 1);
+  const [disk, setDisk] = useState<number>(vm.disk || 10);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const origCpu  = useRef(vm.cpu || 1);
+  const origRam  = useRef(vm.ram || 1);
+  const origDisk = useRef(vm.disk || 10);
+
+  // Update sliders once when API limits arrive with real data
+  const synced = useRef(false);
+  useEffect(() => {
+    if (synced.current || !apiLimits) return;
+    if (apiLimits.limitCpu > 0)    { setCpu(apiLimits.limitCpu);    origCpu.current  = apiLimits.limitCpu; }
+    if (apiLimits.limitRamGb > 0)  { setRamGb(apiLimits.limitRamGb); origRam.current = apiLimits.limitRamGb; }
+    if (apiLimits.limitDiskGb > 0) { setDisk(apiLimits.limitDiskGb); origDisk.current = apiLimits.limitDiskGb; }
+    synced.current = true;
+  }, [apiLimits]);
+
+  const initCpu  = origCpu.current;
+  const initRam  = origRam.current;
+  const initDisk = origDisk.current;
+
+  const cpuChanged  = cpu   !== initCpu;
+  const ramChanged  = ramGb !== initRam;
+  const diskChanged = disk  !== initDisk;
+  const hasChanges = cpuChanged || ramChanged || diskChanged;
+
+  const ramIndex = nearestRamIndex(ramGb);
+  const cpuSlider = Math.min(16, Math.max(1, cpu));
+  const diskSlider = Math.min(200, Math.max(10, disk));
+
+  const cpuPct = ((cpuSlider - 1) / (16 - 1)) * 100;
+  const ramPct = (ramIndex / (RAM_STEPS.length - 1)) * 100;
+  const diskPct = ((diskSlider - 10) / (200 - 10)) * 100;
+
+  const sliderStyle = (pct: number): React.CSSProperties => ({
+    background: `linear-gradient(to right, #FF0023 ${Math.max(0, Math.min(100, pct))}%, #e5e7eb ${Math.max(0, Math.min(100, pct))}%)`,
+  });
+
+  const handleApply = async () => {
+    setSaving(true);
+    try {
+      await updateVmResourcesOnApi(vm.id, cpu, ramGb, disk);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch {
+      // error surfaced via toast in store
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <section className="page-card">
+      <div className="page-card-header-row">
+        <div>
+          <h2 className="page-card-title">Ресурсы</h2>
+          <p className="page-card-text">
+            Управляйте лимитами CPU, RAM и диска. Изменения применяются после подтверждения.
+          </p>
+        </div>
+      </div>
+
+      <div className="resource-sliders">
+        {/* CPU */}
+        <div className="resource-slider-block">
+          <div className="resource-slider-header">
+            <span className="resource-slider-label">CPU</span>
+            <div className="resource-slider-badges">
+              {cpuChanged && <span className="resource-old-value">{initCpu} vCPU</span>}
+              <span className={`resource-slider-value${cpuChanged ? ' resource-slider-value--changed' : ''}`}>
+                {cpu} vCPU
+              </span>
+            </div>
+          </div>
+          <input
+            type="range"
+            min={1} max={16} step={1}
+            value={cpuSlider}
+            onChange={(e) => { setCpu(Number(e.target.value)); }}
+            className="resource-slider"
+            style={sliderStyle(cpuPct)}
+          />
+          <div className="resource-slider-scale">
+            <span>1 vCPU</span>
+            <div className="resource-slider-ticks">
+              {[1,2,4,8,16].map((v) => (
+                <span key={v} className={`resource-tick${cpuSlider === v ? ' resource-tick--active' : ''}`}>{v}</span>
+              ))}
+            </div>
+            <span>16 vCPU</span>
+          </div>
+          <div className="resource-custom-row">
+            <span className="resource-custom-label">Своё значение:</span>
+            <div className="resource-input-pill">
+              <input
+                type="number"
+                className="resource-number-input"
+                value={cpu}
+                min={0.1}
+                max={256}
+                step={0.5}
+                onChange={(e) => {
+                  const n = parseFloat(e.target.value);
+                  if (!isNaN(n) && n > 0) { setCpu(n); }
+                }}
+              />
+              <span className="resource-input-unit">vCPU</span>
+            </div>
+          </div>
+        </div>
+
+        {/* RAM */}
+        <div className="resource-slider-block">
+          <div className="resource-slider-header">
+            <span className="resource-slider-label">RAM</span>
+            <div className="resource-slider-badges">
+              {ramChanged && <span className="resource-old-value">{formatRam(initRam)}</span>}
+              <span className={`resource-slider-value${ramChanged ? ' resource-slider-value--changed' : ''}`}>
+                {formatRam(ramGb)}
+              </span>
+            </div>
+          </div>
+          <input
+            type="range"
+            min={0} max={RAM_STEPS.length - 1} step={1}
+            value={ramIndex}
+            onChange={(e) => { setRamGb(RAM_STEPS[Number(e.target.value)]); }}
+            className="resource-slider"
+            style={sliderStyle(ramPct)}
+          />
+          <div className="resource-slider-scale">
+            <span>512 MB</span>
+            <div className="resource-slider-ticks">
+              {RAM_STEPS.map((v, i) => (
+                <span key={v} className={`resource-tick${ramIndex === i ? ' resource-tick--active' : ''}`}>
+                  {v < 1 ? `${v * 1024}M` : `${v}G`}
+                </span>
+              ))}
+            </div>
+            <span>32 GB</span>
+          </div>
+          <div className="resource-custom-row">
+            <span className="resource-custom-label">Своё значение:</span>
+            <div className="resource-input-pill">
+              <input
+                type="number"
+                className="resource-number-input"
+                value={ramGb}
+                min={0.1}
+                max={512}
+                step={0.5}
+                onChange={(e) => {
+                  const n = parseFloat(e.target.value);
+                  if (!isNaN(n) && n > 0) { setRamGb(n); }
+                }}
+              />
+              <span className="resource-input-unit">GB</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Disk */}
+        <div className="resource-slider-block">
+          <div className="resource-slider-header">
+            <span className="resource-slider-label">Disk</span>
+            <div className="resource-slider-badges">
+              {diskChanged && <span className="resource-old-value">{initDisk} GB</span>}
+              <span className={`resource-slider-value${diskChanged ? ' resource-slider-value--changed' : ''}`}>
+                {disk} GB
+              </span>
+            </div>
+          </div>
+          <input
+            type="range"
+            min={10} max={200} step={10}
+            value={diskSlider}
+            onChange={(e) => { setDisk(Number(e.target.value)); }}
+            className="resource-slider"
+            style={sliderStyle(diskPct)}
+          />
+          <div className="resource-slider-scale">
+            <span>10 GB</span>
+            <div className="resource-slider-ticks">
+              {[10, 50, 100, 150, 200].map((v) => (
+                <span key={v} className={`resource-tick${diskSlider === v ? ' resource-tick--active' : ''}`}>{v}</span>
+              ))}
+            </div>
+            <span>200 GB</span>
+          </div>
+          <div className="resource-custom-row">
+            <span className="resource-custom-label">Своё значение:</span>
+            <div className="resource-input-pill">
+              <input
+                type="number"
+                className="resource-number-input"
+                value={disk}
+                min={0.5}
+                max={10000}
+                step={0.5}
+                onChange={(e) => {
+                  const n = parseFloat(e.target.value);
+                  if (!isNaN(n) && n > 0) { setDisk(n); }
+                }}
+              />
+              <span className="resource-input-unit">GB</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {hasChanges && (
+        <div className="resource-changes-summary">
+          <span className="resource-changes-title">Изменения:</span>
+          {cpuChanged && (
+            <span className="resource-change-chip">
+              CPU {initCpu} → {cpu} vCPU
+            </span>
+          )}
+          {ramChanged && (
+            <span className="resource-change-chip">
+              RAM {formatRam(initRam)} → {formatRam(ramGb)}
+            </span>
+          )}
+          {diskChanged && (
+            <span className="resource-change-chip">
+              Disk {initDisk} → {disk} GB
+            </span>
+          )}
+        </div>
+      )}
+
+      <div className="resource-apply-row">
+        <button
+          type="button"
+          className={`project-card-open-btn resource-apply-btn${saving ? ' resource-apply-btn--loading' : ''}${saved ? ' resource-apply-btn--saved' : ''}`}
+          onClick={handleApply}
+          disabled={saving || !hasChanges}
+        >
+          {saving ? 'Применяется…' : saved ? 'Сохранено ✓' : 'Применить изменения'}
+        </button>
+        {!hasChanges && (
+          <span className="resource-no-changes">Нет изменений</span>
+        )}
       </div>
     </section>
   );

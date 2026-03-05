@@ -71,6 +71,9 @@ export interface ProjectsState extends UiState {
   createSnapshotOnApi(instanceName: string, snapshotName: string): Promise<void>;
   restoreSnapshotOnApi(instanceName: string, snapshotName: string): Promise<void>;
   deleteSnapshotOnApi(instanceName: string, snapshotName: string): Promise<void>;
+
+  updateVmResources(vmId: string, cpu: number, ram: number, disk: number): void;
+  updateVmResourcesOnApi(vmId: string, cpus: number, ramGb: number, diskGb: number): Promise<void>;
 }
 
 let toastIdCounter = 1;
@@ -708,6 +711,33 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
     await api.deleteSnapshot(instanceName, snapshotName);
     get().addToast(`Снапшот «${snapshotName}» удалён`);
     await get().loadSnapshots(instanceName);
+  },
+
+  updateVmResources(vmId, cpu, ram, disk) {
+    set((s) => ({
+      projects: s.projects.map((project) => ({
+        ...project,
+        resources: {
+          ...project.resources,
+          vms: project.resources.vms.map((vm) =>
+            vm.id !== vmId ? vm : { ...vm, cpu, ram, disk }
+          ),
+        },
+      })),
+    }));
+  },
+
+  async updateVmResourcesOnApi(vmId, cpus, ramGb, diskGb) {
+    // LXD accepts fractional CPU (e.g. "0.5") and memory in MB or GB
+    const memMb = ramGb * 1024;
+    const memStr = memMb < 1024 ? `${Math.round(memMb)}MB` : `${ramGb}GB`;
+    await api.updateResources(vmId, {
+      cpus: String(cpus),
+      memory: memStr,
+      disk: `${diskGb}GB`,
+    });
+    get().updateVmResources(vmId, cpus, ramGb, diskGb);
+    get().addToast(`${vmId}: ресурсы обновлены`);
   },
 }));
 

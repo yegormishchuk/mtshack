@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { api } from '../services/api';
+import { appendSnapshot, loadHistory, type UsageHistory } from '../services/usageHistory';
 
 const SYSTEM_NETWORKS = new Set(['lxdbr0', 'lo', 'eth0', 'mpbr0', 'lxcbr0', 'virbr0']);
 
@@ -172,6 +173,7 @@ interface AdminState {
   metrics: DashboardMetrics | null;
   rawInstances: RawAny[];
   snapshotsByInstance: Record<string, RawSnapshot[]>;
+  usageHistory: UsageHistory;
   loading: boolean;
   snapshotsLoading: boolean;
   error?: string;
@@ -187,6 +189,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   metrics: null,
   rawInstances: [],
   snapshotsByInstance: {},
+  usageHistory: loadHistory(),
   loading: false,
   snapshotsLoading: false,
   error: undefined,
@@ -202,7 +205,15 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       const networks = networksRaw as RawAny[];
       const instances = instancesRaw as RawAny[];
       const metrics = buildMetrics(networks, instances);
-      set({ metrics, rawInstances: instances, loading: false });
+      const usageHistory = appendSnapshot({
+        runningVMs: metrics.runningVMs,
+        stoppedVMs: metrics.stoppedVMs,
+        provisioningVMs: metrics.provisioningVMs,
+        totalCpuCores: metrics.totalCpuCores,
+        totalRamGB: metrics.totalRamGB,
+        totalVMs: metrics.totalVMs,
+      });
+      set({ metrics, rawInstances: instances, usageHistory, loading: false });
     } catch (err) {
       set({
         loading: false,

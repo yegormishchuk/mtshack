@@ -4,6 +4,120 @@ import { useAdminStore } from '../store/adminStore';
 import type { ProjectSummary } from '../store/adminStore';
 import './DashboardPage.css';
 
+interface SparkSeries {
+  key: 'runningVMs' | 'stoppedVMs' | 'provisioningVMs' | 'totalCpuCores' | 'totalRamGB';
+  color: string;
+  label: string;
+}
+
+function SparklineChart({
+  points,
+  series,
+  height = 80,
+}: {
+  points: ReturnType<typeof useAdminStore.getState>['usageHistory']['points'];
+  series: SparkSeries[];
+  height?: number;
+}) {
+  const W = 600;
+  const H = height;
+  const PAD = { top: 6, bottom: 18, left: 4, right: 4 };
+
+  if (points.length < 2) {
+    return (
+      <div className="spark-empty">
+        Недостаточно данных — соберётся через несколько минут
+      </div>
+    );
+  }
+
+  const tMin = points[0].timestamp;
+  const tMax = points[points.length - 1].timestamp;
+  const tRange = tMax - tMin || 1;
+
+  const allValues = series.flatMap((s) => points.map((p) => p[s.key] as number));
+  const vMin = 0;
+  const vMax = Math.max(...allValues, 1);
+
+  const toX = (t: number) => PAD.left + ((t - tMin) / tRange) * (W - PAD.left - PAD.right);
+  const toY = (v: number) => PAD.top + (1 - (v - vMin) / (vMax - vMin)) * (H - PAD.top - PAD.bottom);
+
+  const labelTime = (t: number) => {
+    const d = new Date(t);
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  };
+
+  const tickCount = Math.min(points.length, 6);
+  const tickIdxs = Array.from({ length: tickCount }, (_, i) =>
+    Math.round((i / (tickCount - 1)) * (points.length - 1))
+  );
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="spark-svg" preserveAspectRatio="none">
+      {/* Grid lines */}
+      {[0.25, 0.5, 0.75, 1].map((f) => {
+        const y = PAD.top + (1 - f) * (H - PAD.top - PAD.bottom);
+        return (
+          <line
+            key={f}
+            x1={PAD.left} y1={y} x2={W - PAD.right} y2={y}
+            stroke="#f0f0f5" strokeWidth="1"
+          />
+        );
+      })}
+
+      {/* Series lines */}
+      {series.map((s) => {
+        const pts = points
+          .map((p) => `${toX(p.timestamp)},${toY(p[s.key] as number)}`)
+          .join(' ');
+        return (
+          <polyline
+            key={s.key}
+            points={pts}
+            fill="none"
+            stroke={s.color}
+            strokeWidth="2"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+        );
+      })}
+
+      {/* Dots at last point */}
+      {series.map((s) => {
+        const last = points[points.length - 1];
+        return (
+          <circle
+            key={s.key}
+            cx={toX(last.timestamp)}
+            cy={toY(last[s.key] as number)}
+            r="3"
+            fill={s.color}
+          />
+        );
+      })}
+
+      {/* Time labels */}
+      {tickIdxs.map((idx) => {
+        const p = points[idx];
+        const x = toX(p.timestamp);
+        return (
+          <text
+            key={idx}
+            x={x} y={H - 2}
+            textAnchor="middle"
+            fontSize="9"
+            fill="#aaaaaa"
+          >
+            {labelTime(p.timestamp)}
+          </text>
+        );
+      })}
+    </svg>
+  );
+}
+
 function StatusBar({ value, total, color }: { value: number; total: number; color: string }) {
   const pct = total > 0 ? Math.round((value / total) * 100) : 0;
   return (
@@ -90,6 +204,7 @@ export function DashboardPage() {
   const loading = useAdminStore((s) => s.loading);
   const error = useAdminStore((s) => s.error);
   const loadAll = useAdminStore((s) => s.loadAll);
+  const usageHistory = useAdminStore((s) => s.usageHistory);
 
   useEffect(() => {
     loadAll();
@@ -260,6 +375,56 @@ export function DashboardPage() {
                 </div>
               )}
             </div>
+          </section>
+
+          {/* Usage history chart */}
+          <section className="dash-card">
+            <h2 className="dash-card-title">
+              История нагрузки (последние 30 мин)
+              <span className="dash-card-subtitle">обновляется каждую минуту</span>
+            </h2>
+            <div className="spark-legend">
+              <span className="spark-legend-item">
+                <svg width="16" height="3"><line x1="0" y1="1.5" x2="16" y2="1.5" stroke="#22C55E" strokeWidth="2" /></svg>
+                Running
+              </span>
+              <span className="spark-legend-item">
+                <svg width="16" height="3"><line x1="0" y1="1.5" x2="16" y2="1.5" stroke="#6B7280" strokeWidth="2" /></svg>
+                Stopped
+              </span>
+              <span className="spark-legend-item">
+                <svg width="16" height="3"><line x1="0" y1="1.5" x2="16" y2="1.5" stroke="#F97316" strokeWidth="2" /></svg>
+                Provisioning
+              </span>
+            </div>
+            <SparklineChart
+              points={usageHistory.points}
+              series={[
+                { key: 'runningVMs', color: '#22C55E', label: 'Running' },
+                { key: 'stoppedVMs', color: '#6B7280', label: 'Stopped' },
+                { key: 'provisioningVMs', color: '#F97316', label: 'Provisioning' },
+              ]}
+              height={100}
+            />
+            <div className="spark-divider" />
+            <div className="spark-legend" style={{ marginTop: 12 }}>
+              <span className="spark-legend-item">
+                <svg width="16" height="3"><line x1="0" y1="1.5" x2="16" y2="1.5" stroke="#F97316" strokeWidth="2" /></svg>
+                CPU cores
+              </span>
+              <span className="spark-legend-item">
+                <svg width="16" height="3"><line x1="0" y1="1.5" x2="16" y2="1.5" stroke="#8B5CF6" strokeWidth="2" /></svg>
+                RAM GB
+              </span>
+            </div>
+            <SparklineChart
+              points={usageHistory.points}
+              series={[
+                { key: 'totalCpuCores', color: '#F97316', label: 'CPU' },
+                { key: 'totalRamGB', color: '#8B5CF6', label: 'RAM GB' },
+              ]}
+              height={100}
+            />
           </section>
 
           {/* Resource usage overview */}
