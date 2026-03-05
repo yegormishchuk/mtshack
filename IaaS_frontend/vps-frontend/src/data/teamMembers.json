@@ -1,0 +1,14 @@
+[{
+  "id": "2",
+  "email": "jane.smith@example.com",
+  "role": "developer",
+  "permissions": {
+    "createProjects": true,
+    "editProjects": true,
+    "deleteProjects": false,
+    "viewAllProjects": true
+  },
+  "projects": "all",
+  "invitedAt": "2023-05-15T10:30:00Z",
+  "status": "active"
+}]

@@ -1,0 +1,770 @@
+@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;600;700&display=swap');
+
+.build-root {
+  font-family: 'Unbounded', system-ui, -apple-system, BlinkMacSystemFont,
+    'Segoe UI', sans-serif;
+  color: #111111;
+  background: #f5f5f7;
+}
+
+.build-hero {
+  background: #ffffff;
+  padding-top: 8px;
+  padding-bottom: 40px;
+  border-bottom: 1px solid #f1f1f1;
+}
+
+.build-hero-text {
+  margin-bottom: 32px;
+  margin-left: 229px;
+}
+
+.build-hero-title {
+  font-size: 40px;
+  line-height: 1.15;
+  font-weight: 600;
+  margin: 0 0 10px;
+}
+
+.build-hero-subtitle {
+  font-size: 18px;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #858585;
+  margin: 0;
+}
+
+.build-hero-servers {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 26px;
+  margin-left: 229px;
+  width: 1118px;
+  height: 115px;
+}
+
+.build-hero-server {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.build-hero-server-image-wrap {
+  width: 72px;
+  height: 96px;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: none;
+  background: #f4f4f4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.build-hero-server-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.build-hero-server-caption {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.build-os-guide {
+  background: #f5f5f7;
+  border-top: 1px solid #f1f1f1;
+  border-bottom: 1px solid #f1f1f1;
+  padding: 32px 0 40px;
+}
+
+.build-os-guide-inner {
+  padding-inline: 229px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.build-os-guide-header {
+  max-width: 720px;
+}
+
+.build-os-guide-title {
+  margin: 0 0 8px;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.build-os-guide-subtitle {
+  margin: 0;
+  font-size: 15px;
+  color: #7a7a7a;
+}
+
+.build-os-guide-grid {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.build-os-guide-card {
+  background: transparent;
+  border-radius: 20px;
+  padding: 20px 18px 18px;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 303px;
+  height: 320px;
+}
+
+.build-os-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.build-os-guide-card-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.build-os-guide-card-tag {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #FF0023;
+}
+
+.build-os-guide-card-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #555555;
+}
+
+.build-os-card-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+  width: 100%;
+}
+
+.build-os-card-logo-wrap {
+  width: 303px;
+  max-width: 100%;
+  height: 189px;
+  border-radius: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.build-os-card-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 26px;
+}
+
+.build-os-card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.build-os-card-family {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: #777777;
+}
+
+.build-os-guide-card-tag {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #FF0023;
+}
+
+.build-os-guide-card-text {
+  margin-top: 6px;
+  margin-bottom: 18px;
+}
+
+.build-os-card-actions {
+  margin-top: auto;
+  width: 100%;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.build-os-guide-card-active {
+  border: none;
+  box-shadow: none;
+}
+
+.build-os-guide-card-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.build-explore {
+  position: relative;
+  left: 50%;
+  right: 50%;
+  width: 100vw;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  padding-top: 48px;
+  padding-bottom: 56px;
+  background: #f5f5f7;
+}
+
+.build-explore-inner {
+  width: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.build-explore-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 24px;
+  padding-inline: 229px;
+  box-sizing: border-box;
+}
+
+.build-explore-heading {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.build-explore-step {
+  width: 64px;
+  height: auto;
+}
+
+.build-explore-title-wrap {
+  display: flex;
+  align-items: center;
+}
+
+.build-explore-title {
+  font-size: 32px;
+  font-weight: 600;
+  margin: 0 0 0 229px;
+}
+
+.build-plans-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.build-plans-grid {
+  display: flex;
+  justify-content: flex-start;
+  gap: 64px;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  width: 100vw;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  padding: 0 229px 16px;
+  box-sizing: border-box;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none; /* Firefox */
+}
+
+.build-plans-grid::-webkit-scrollbar {
+  display: none; /* WebKit */
+}
+
+.build-plans-controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 18px;
+}
+
+.build-assistant-fab {
+  display: none;
+}
+
+.build-assistant-fab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.2);
+}
+
+.build-assistant-fab-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.build-selection-step {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 20px 20px 18px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.06);
+}
+
+.build-selection-step-label {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #FF0023;
+  margin: 0 0 6px;
+}
+
+.build-selection-step-title {
+  margin: 0 0 14px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.build-selection-step-subtitle {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #777777;
+}
+
+.build-selection-step-summary .build-selection-step-label {
+  display: none;
+}
+
+.build-region-section,
+.build-billing-section {
+  background: #f5f5f7;
+  padding: 32px 0 40px;
+}
+
+.build-region-inner,
+.build-billing-inner {
+  padding-inline: 229px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.build-region-title,
+.build-billing-title {
+  margin: 0 0 8px;
+  font-size: 26px;
+  font-weight: 600;
+}
+
+.build-region-subtitle,
+.build-billing-subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #7a7a7a;
+}
+
+.build-selection-panel {
+  background: #f5f5f7;
+  padding: 32px 0 56px;
+}
+
+.build-selection-panel .build-selection-step {
+  max-width: none;
+  width: auto;
+  margin: 0 229px;
+}
+
+.build-selection-empty {
+  margin: 0;
+  font-size: 13px;
+  color: #8a8a8a;
+}
+
+.build-selection-plan-card {
+  border-radius: 18px;
+  background: #f5f5f7;
+  padding: 14px 16px 12px;
+}
+
+.build-selection-plan-title {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.build-selection-plan-price {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: #777777;
+}
+
+.build-selection-plan-specs {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.build-selection-plan-specs li {
+  display: flex;
+  justify-content: space-between;
+  column-gap: 12px;
+}
+
+.build-selection-plan-specs li span:first-child {
+  color: #555555;
+}
+
+.build-selection-plan-specs li span:last-child {
+  font-weight: 500;
+}
+
+.build-os-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.build-os-btn {
+  width: 100%;
+  border-radius: 999px;
+  border: 1px solid #e1e1e1;
+  background: #ffffff;
+  padding: 10px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+}
+
+.build-os-btn:disabled {
+  cursor: default;
+  opacity: 0.65;
+}
+
+.build-os-btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  border-color: #FF0023;
+}
+
+.build-os-btn-active {
+  border-color: #FF0023;
+  background: rgba(255, 0, 35, 0.06);
+}
+
+.build-os-btn-name {
+  font-weight: 500;
+}
+
+.build-os-btn-family {
+  color: #777777;
+}
+
+.build-selection-hint {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #8a8a8a;
+}
+
+.build-selection-summary {
+  margin: 12px 0 0;
+  font-size: 13px;
+}
+
+.build-billing-options,
+.build-region-options {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px 12px;
+}
+
+.build-region-btn-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.build-region-flag {
+  font-size: 18px;
+}
+
+.build-summary-total {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: #f5f5f7;
+}
+
+.build-summary-total-label {
+  margin: 0 0 4px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8a8a8a;
+}
+
+.build-summary-total-amount {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.build-summary-total-hint {
+  margin: 0;
+  font-size: 12px;
+  color: #777777;
+}
+
+.build-summary-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.build-summary-pay-btn {
+  width: 220px;
+}
+
+.build-plans-control-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: none;
+  background: #dedee2;
+  color: #616163;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: none;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.build-plans-control-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+.build-plans-control-btn:disabled {
+  background: #ebebee;
+  color: #b7b7b9;
+  cursor: default;
+  box-shadow: none;
+}
+
+.build-plan-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: stretch;
+  width: 365px;
+  flex: 0 0 auto;
+}
+
+.build-plan-image-wrap {
+  width: 365px;
+  height: 378px;
+  border-radius: 32px;
+  overflow: hidden;
+  background: #e5e5e5;
+}
+
+.build-plan-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.build-plan-card-body {
+  width: 365px;
+  height: 444px;
+  border-radius: 0;
+  background: transparent;
+  padding: 24px 14px 0;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-sizing: border-box;
+}
+
+.build-plan-card-header {
+  width: 337px;
+  height: 69px;
+  margin: 0 auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.build-plan-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+
+.build-plan-price {
+  font-size: 13px;
+  color: #777777;
+  margin: 0;
+}
+
+.build-plan-specs {
+  margin: 0 auto;
+  width: 337px;
+  height: 260px;
+  padding: 10px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  border-radius: 26px;
+  background: rgba(120, 120, 128, 0.16);
+}
+
+.build-plan-spec-row {
+  display: grid;
+  grid-template-columns: 1.3fr 0.7fr;
+  column-gap: 8px;
+  align-items: center;
+  height: 40px;
+  padding: 4px 0;
+}
+
+.build-plan-spec-row + .build-plan-spec-row {
+  border-top: 1px solid #d0d0d0;
+}
+
+.build-plan-spec-row dt {
+  font-weight: 400;
+  color: #555555;
+}
+
+.build-plan-spec-row dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 500;
+  color: #111111;
+}
+
+.build-plan-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 18px;
+  padding: 0 14px 0;
+  box-sizing: border-box;
+}
+
+.build-plan-btn {
+  height: 48px;
+  border-radius: 999px;
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: none;
+  transition: transform 0.12s ease, box-shadow 0.12s ease,
+    background 0.12s ease, color 0.12s ease;
+}
+
+.build-plan-btn-ghost {
+  width: 207px;
+  background: #ffffff;
+  color: #FF0023;
+}
+
+.build-plan-btn-primary {
+  width: 240px;
+  background: linear-gradient(135deg, #FF0023, #FF0023);
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.build-plan-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: none;
+}
+
+.build-plan-btn-icon {
+  width: 14px;
+  height: 14px;
+}
+
+@media (max-width: 1024px) {
+  .build-explore-layout {
+    padding-inline: 20px;
+  }
+
+  .build-os-guide-inner {
+    padding-inline: 20px;
+  }
+
+  .build-os-guide-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .build-selection-panel {
+    max-width: none;
+    padding-inline: 20px;
+  }
+
+  .build-assistant-fab {
+    display: none;
+  }
+
+  .build-plans-grid {
+    padding-inline: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .build-hero-title {
+    font-size: 30px;
+  }
+
+  .build-hero-servers {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .build-os-guide-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

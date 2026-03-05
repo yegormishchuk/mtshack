@@ -1,0 +1,92 @@
+.iaas-hero {
+  min-height: calc(100vh - 160px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.iaas-hero-title {
+  max-width: 820px;
+  font-size: 40px;
+  line-height: 1.25;
+  font-weight: 600;
+  margin: 0 0 16px;
+}
+
+.iaas-hero-subtitle {
+  max-width: 560px;
+  font-size: 16px;
+  color: #8b8b8b;
+  margin: 0 0 40px;
+}
+
+.iaas-hero-actions {
+  display: flex;
+  gap: 24px;
+}
+
+.iaas-btn {
+  min-width: 144px;
+  height: 44px;
+  padding: 0 28px;
+  border-radius: 999px;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.08);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease,
+    color 0.12s ease;
+}
+
+.iaas-btn-primary {
+  background: linear-gradient(135deg, #FF0023, #FF0023);
+  color: #ffffff;
+  box-shadow: 0 22px 44px rgba(255, 0, 35, 0.35);
+}
+
+.iaas-btn-primary-label {
+  display: inline-flex;
+  align-items: center;
+}
+
+.iaas-btn-primary-icon {
+  width: 18px;
+  height: 24px;
+  margin-left: 6px;
+}
+
+.iaas-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 26px 56px rgba(255, 0, 35, 0.45);
+}
+
+.iaas-btn-secondary {
+  background: #ffffff;
+  color: #FF0023;
+}
+
+.iaas-btn-secondary:hover {
+  background: #fff3f3;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .iaas-hero {
+    padding-inline: 16px;
+  }
+
+  .iaas-hero-title {
+    font-size: 30px;
+  }
+
+  .iaas-hero-actions {
+    flex-direction: column;
+  }
+}
+

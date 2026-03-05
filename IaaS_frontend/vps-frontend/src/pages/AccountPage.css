@@ -1,0 +1,331 @@
+/* ── Modal overlay ── */
+.acc-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.acc-modal {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 24px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ── Modal header ── */
+.acc-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.acc-modal-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.acc-modal-close {
+  border: none;
+  background: #f5f5f7;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #555;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.12s;
+}
+
+.acc-modal-close:hover {
+  background: #ebebee;
+}
+
+/* ── Form ── */
+.acc-field-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: #555;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.acc-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #e1e1e1;
+  border-radius: 12px;
+  padding: 9px 12px;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.acc-input:focus {
+  border-color: #ff0023;
+}
+
+/* ── Role cards ── */
+.acc-role-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.acc-role-card {
+  border: 1.5px solid #e1e1e1;
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: #fafafa;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.acc-role-card:hover {
+  border-color: #ccc;
+  background: #f5f5f7;
+}
+
+.acc-role-card-active {
+  border-color: #ff0023;
+  background: rgba(255, 0, 35, 0.04);
+}
+
+.acc-role-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111;
+}
+
+.acc-role-card-active .acc-role-name {
+  color: #ff0023;
+}
+
+.acc-role-desc {
+  font-size: 11px;
+  color: #777;
+  line-height: 1.4;
+}
+
+/* ── Custom permissions ── */
+.acc-custom-perms {
+  border: 1px solid #e1e1e1;
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: #fafafa;
+  margin-top: 4px;
+}
+
+.acc-custom-perms-title {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #555;
+}
+
+.acc-perm-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.acc-perm-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #222;
+}
+
+.acc-perm-row input[type='checkbox'] {
+  margin-top: 2px;
+  accent-color: #ff0023;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* ── Project selection ── */
+.acc-proj-mode {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.acc-proj-mode-btn {
+  flex: 1;
+  border: 1.5px solid #e1e1e1;
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 12px;
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  color: #555;
+}
+
+.acc-proj-mode-btn.active {
+  border-color: #ff0023;
+  background: rgba(255, 0, 35, 0.06);
+  color: #ff0023;
+  font-weight: 500;
+}
+
+.acc-proj-list {
+  border: 1px solid #e1e1e1;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fafafa;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.acc-proj-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background 0.1s;
+}
+
+.acc-proj-row:last-child {
+  border-bottom: none;
+}
+
+.acc-proj-row:hover {
+  background: #f5f5f7;
+}
+
+.acc-proj-row input[type='checkbox'] {
+  accent-color: #ff0023;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.acc-proj-name {
+  font-weight: 500;
+  flex: 1;
+}
+
+.acc-proj-region {
+  font-size: 11px;
+  color: #999;
+}
+
+.acc-proj-empty {
+  margin: 0;
+  padding: 14px;
+  font-size: 13px;
+  color: #999;
+  text-align: center;
+}
+
+/* ── Actions ── */
+.acc-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.acc-modal-actions .page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ── Team table override (6 cols: email, role, projects, status, date, action) ── */
+.acc-team-table.page-table .page-table-header,
+.acc-team-table.page-table .page-table-row {
+  grid-template-columns: 1.6fr 1fr 0.7fr 0.85fr 0.85fr 0.4fr;
+}
+
+/* ── Delete button ── */
+.acc-delete-btn {
+  border: none;
+  background: transparent;
+  padding: 4px 6px;
+  font-size: 12px;
+  color: #bbb;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+  justify-self: end;
+}
+
+.acc-delete-btn:hover {
+  color: #ff0023;
+  background: rgba(255, 0, 35, 0.07);
+}
+
+.acc-team-empty-row {
+  opacity: 0.7;
+}
+
+/* ── Sent state ── */
+.acc-modal-sent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 32px 16px;
+}
+
+.acc-modal-sent-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(34, 197, 94, 0.12);
+  color: #16a34a;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.acc-modal-sent p {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: #111;
+}
+
+@media (max-width: 540px) {
+  .acc-role-grid {
+    grid-template-columns: 1fr;
+  }
+}

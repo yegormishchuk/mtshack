@@ -1,0 +1,23 @@
+.admin-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 36px;
+  transform: translateX(-50%);
+  background: #0f172a;
+  color: #ffffff;
+  font-family: 'Unbounded', system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 12px 28px;
+  border-radius: 999px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  z-index: 9999;
+  white-space: nowrap;
+  animation: toast-in 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}

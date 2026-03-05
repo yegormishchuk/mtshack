@@ -1,0 +1,16 @@
+# Общие
+.DS_Store
+.history/
+
+# Node / JS проекты
+node_modules/
+dist/
+build/
+.vite/
+.next/
+coverage/
+
+# IDE / Cursor
+.vscode/
+.idea/
+.cursor/

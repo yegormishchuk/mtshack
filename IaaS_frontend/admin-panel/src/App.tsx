@@ -1,0 +1,20 @@
+import { Navigate, Route, Routes } from 'react-router-dom';
+import { Layout } from './components/Layout';
+import { DashboardPage } from './pages/DashboardPage';
+import { InstancesPage } from './pages/InstancesPage';
+import { ProjectsPage } from './pages/ProjectsPage';
+import { SnapshotsPage } from './pages/SnapshotsPage';
+
+export default function App() {
+  return (
+    <Layout>
+      <Routes>
+        <Route path="/" element={<DashboardPage />} />
+        <Route path="/projects" element={<ProjectsPage />} />
+        <Route path="/instances" element={<InstancesPage />} />
+        <Route path="/snapshots" element={<SnapshotsPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Layout>
+  );
+}
