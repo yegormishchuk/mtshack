@@ -229,6 +229,7 @@ export function ServersPage() {
               <button
                 type="button"
                 className="servers-balance-topup-btn projects-balance-topup-btn sidebar-balance-btn"
+                onClick={() => navigate('/billing')}
               >
                 Пополнить баланс
               </button>
