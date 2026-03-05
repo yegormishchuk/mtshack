@@ -777,6 +777,62 @@
   }
 }
 
+/* ── Oleg selected button (region / billing cycle) ── */
+.oleg-selected-btn {
+  border: 2px solid #FF0023 !important;
+  box-shadow: 0 0 0 3px rgba(255, 0, 35, 0.14) !important;
+  color: #FF0023 !important;
+  background: rgba(255, 0, 35, 0.04) !important;
+  position: relative;
+}
+
+/* ── Section header row (title + badge side by side) ── */
+.build-section-header-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.build-section-header-row .build-region-title,
+.build-section-header-row .build-billing-title {
+  margin-bottom: 0;
+}
+
+/* ── Oleg summary card ── */
+.oleg-summary-active {
+  border: 2px solid #FF0023 !important;
+  box-shadow: 0 0 0 4px rgba(255, 0, 35, 0.10) !important;
+}
+
+.oleg-summary-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.oleg-summary-title {
+  margin: 0 !important;
+  font-size: 16px !important;
+}
+
+.oleg-summary-lineup {
+  font-size: 11px;
+  color: #55585f;
+  line-height: 1.7;
+  margin: 0 0 14px;
+  padding: 8px 12px;
+  background: rgba(255, 0, 35, 0.04);
+  border-radius: 8px;
+  border-left: 3px solid #FF0023;
+}
+
+.build-summary-change-btn {
+  margin-top: 8px;
+  width: 100%;
+}
+
 @media (max-width: 640px) {
   .build-hero-title {
     font-size: 30px;

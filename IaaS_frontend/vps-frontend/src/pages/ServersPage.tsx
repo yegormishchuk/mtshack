@@ -405,7 +405,7 @@ export function ServersPage() {
                 </select>
               </div>
 
-              <div className="servers-list">
+              <div className="servers-list" data-tour="server-status">
                 {filteredRows.map((row) => (
                   <article key={row.id} className="server-card" role="row">
                     <div className="server-row">
@@ -487,6 +487,7 @@ export function ServersPage() {
 
 function SecurityTourSection() {
   const { currentStepId } = useAssistantStore();
+  const navigate = useNavigate();
   if (currentStepId !== 'security-tour') return null;
 
   return (
@@ -494,11 +495,61 @@ function SecurityTourSection() {
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
         <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#FF0023', animation: 'pulse 1.5s infinite' }} />
         <h2 style={{ fontSize: '16px', fontWeight: '700', margin: '0', fontFamily: 'Unbounded, system-ui, sans-serif' }}>
-          Тур по безопасности
+          Тур по продукту
         </h2>
         <span style={{ fontSize: '10px', background: '#FF0023', color: '#fff', borderRadius: '4px', padding: '2px 8px', fontFamily: 'Unbounded, system-ui, sans-serif', fontWeight: '700' }}>
           ОЛЕГ ВЕДЁТ
         </span>
+      </div>
+
+      {/* Quick-access cards for Console & Files — tour targets */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px', marginBottom: '16px' }}>
+        <button
+          type="button"
+          data-tour="open-console"
+          onClick={() => navigate('/console')}
+          style={{
+            background: '#fff',
+            border: '1px solid #e5e5e5',
+            borderRadius: '12px',
+            padding: '16px',
+            cursor: 'pointer',
+            textAlign: 'left',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+          }}
+        >
+          <span style={{ fontSize: '20px' }}>🖥️</span>
+          <div>
+            <div style={{ fontSize: '12px', fontWeight: '700', fontFamily: 'Unbounded, system-ui, sans-serif' }}>Консоль</div>
+            <div style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>SSH из браузера</div>
+          </div>
+        </button>
+        <button
+          type="button"
+          data-tour="open-files"
+          onClick={() => navigate('/files')}
+          style={{
+            background: '#fff',
+            border: '1px solid #e5e5e5',
+            borderRadius: '12px',
+            padding: '16px',
+            cursor: 'pointer',
+            textAlign: 'left',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+          }}
+        >
+          <span style={{ fontSize: '20px' }}>📁</span>
+          <div>
+            <div style={{ fontSize: '12px', fontWeight: '700', fontFamily: 'Unbounded, system-ui, sans-serif' }}>Файлы</div>
+            <div style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>Менеджер файлов</div>
+          </div>
+        </button>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px' }}>

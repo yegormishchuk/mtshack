@@ -193,17 +193,36 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
       return;
     }
 
-    // ── Security tour sub-steps ─────────────────────────────────
+    // ── Product tour sub-steps ──────────────────────────────────
     if (currentStepId === 'security-tour' && (event === 'TOUR_NEXT' || event === 'TOUR_SKIP')) {
+      if (event === 'TOUR_SKIP') {
+        pushFeedItem({ type: 'system', content: '✅ Тур пропущен.' });
+        set({
+          currentStepId: 'tour-done',
+          tourStepIndex: 0,
+          spotlightTarget: null,
+          navigateTo: null,
+        });
+        return;
+      }
       const nextIdx = tourStepIndex + 1;
-      if (event === 'TOUR_SKIP' || nextIdx >= TOUR_STOPS.length) {
-        pushFeedItem({ type: 'system', content: '✅ Тур завершён! Продукт защищён.' });
-        set({ tourStepIndex: 0, spotlightTarget: null });
+      if (nextIdx >= TOUR_STOPS.length) {
+        pushFeedItem({ type: 'system', content: '✅ Тур завершён! Ты знаешь весь продукт.' });
+        set({
+          currentStepId: 'tour-done',
+          tourStepIndex: 0,
+          spotlightTarget: null,
+          navigateTo: null,
+        });
         return;
       }
       const stop = TOUR_STOPS[nextIdx];
       pushFeedItem({ type: 'system', content: `📍 ${stop.label}` });
-      set({ tourStepIndex: nextIdx, spotlightTarget: stop.target });
+      set({
+        tourStepIndex: nextIdx,
+        spotlightTarget: stop.target,
+        navigateTo: stop.navigateTo ?? null,
+      });
       return;
     }
 
@@ -301,14 +320,14 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
       });
     }
 
-    // Set initial tour spotlight
+    // Set initial tour spotlight + navigate to first stop's page
     if (nextStepId === 'security-tour') {
       const firstStop = TOUR_STOPS[0];
       set({
         currentStepId: nextStepId,
         appState: newApp,
         spotlightTarget: firstStop.target,
-        navigateTo,
+        navigateTo: firstStop.navigateTo ?? navigateTo,
         isDeploying: false,
         deployStageIndex: -1,
         tourStepIndex: 0,

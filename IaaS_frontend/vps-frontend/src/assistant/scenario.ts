@@ -319,16 +319,16 @@ export const SCENARIO: Record<string, ScenarioStep> = {
     },
   },
 
-  // ─── 12b. Тур по безопасности ───────────────────────────────
+  // ─── 12b. Тур по продукту ───────────────────────────────────
   'security-tour': {
     id: 'security-tour',
     stepIndex: 12,
     totalSteps: TOTAL_STEPS,
     navigateTo: '/servers',
     card: {
-      title: 'Тур по безопасности',
-      instruction: 'Покажу ключевые настройки безопасности и мониторинга.',
-      hint: '6 важных разделов',
+      title: 'Тур по продукту',
+      instruction: 'Покажу все ключевые разделы: сервера, безопасность, файлы и счета.',
+      hint: '9 шагов — кратко и по делу',
       primaryAction: {
         label: '→ Понял, дальше',
         event: 'TOUR_NEXT',
@@ -338,12 +338,38 @@ export const SCENARIO: Record<string, ScenarioStep> = {
         { id: 'tour-skip', label: 'Пропустить тур', event: 'TOUR_SKIP', value: 'skip' },
       ],
       isTour: true,
-      accordionText: 'Тур охватывает: Firewall, SSH ключи, обновления, мониторинг CPU/RAM, логи, резервные копии и оповещения.',
+      accordionText: 'Тур охватывает: статус сервера, мониторинг, консоль, файловый менеджер, firewall, резервные копии, баланс, счета и способ оплаты.',
     },
     transitions: {
       TOUR_NEXT: 'security-tour',
-      TOUR_SKIP: 'security-tour',
-      TOUR_DONE: 'security-tour',
+      TOUR_SKIP: 'tour-done',
+      TOUR_DONE: 'tour-done',
+    },
+  },
+
+  // ─── 12c. Тур завершён ──────────────────────────────────────
+  'tour-done': {
+    id: 'tour-done',
+    stepIndex: 12,
+    totalSteps: TOTAL_STEPS,
+    card: {
+      title: 'Готово! 🎉',
+      instruction: 'Ты полностью ориентируешься в продукте. Сервер запущен и готов к работе.',
+      hint: 'Можешь открыть продукт по IP',
+      primaryAction: {
+        label: '✓ Закрыть тур',
+        event: 'TOUR_CLOSE',
+        icon: 'check',
+      },
+      secondaryButtons: [
+        { id: 'open-product', label: '🌐 Открыть продукт', event: 'OPEN_PRODUCT', value: 'open' },
+      ],
+      isDone: true,
+      accordionText: 'Ты прошёл полный тур: сервера, мониторинг, консоль, файлы, безопасность, резервные копии и счета. Продукт доступен по адресу http://185.12.44.201.',
+    },
+    transitions: {
+      TOUR_CLOSE: 'tour-done',
+      OPEN_PRODUCT: 'tour-done',
     },
   },
 };
@@ -362,6 +388,7 @@ export const STEP_ORDER = [
   'run-project',
   'project-done',
   'security-tour',
+  'tour-done',
 ] as const;
 
 export type StepId = (typeof STEP_ORDER)[number];
@@ -463,12 +490,65 @@ export const RUN_CMDS: Record<string, Array<{ cmd: string; label: string; output
   ],
 };
 
-// Security tour stops
-export const TOUR_STOPS = [
-  { target: 'tour-firewall', label: 'Firewall / Порты', desc: 'Открытые порты — потенциальные точки входа. Оставь только 80, 443 и свой SSH порт.' },
-  { target: 'tour-ssh', label: 'SSH ключи', desc: 'Вход по паролю отключён. Используется только публичный ключ — это защита от брутфорса.' },
-  { target: 'tour-updates', label: 'Автообновления', desc: 'Включены автоматические security-патчи. Критические уязвимости закрываются без участия пользователя.' },
-  { target: 'tour-monitoring', label: 'Мониторинг CPU/RAM', desc: 'Графики в реальном времени. Аномальные пики CPU могут говорить о взломе или DDoS.' },
-  { target: 'tour-logs', label: 'Логи', desc: 'Все входы по SSH и системные события фиксируются. Можно отследить любую активность.' },
-  { target: 'tour-backups', label: 'Резервные копии', desc: 'Снапшоты создаются автоматически каждые 24 часа. Хранятся 7 дней — "машина времени" для сервера.' },
-] as const;
+// Product tour stops — navigateTo triggers route change before spotlight
+export const TOUR_STOPS: ReadonlyArray<{
+  readonly target: string;
+  readonly label: string;
+  readonly desc: string;
+  readonly navigateTo?: string;
+}> = [
+  {
+    target: 'server-status',
+    label: 'Статус сервера',
+    desc: 'Здесь статус сервера и IP-адрес для подключения. Зелёный — всё работает.',
+    navigateTo: '/servers',
+  },
+  {
+    target: 'tour-monitoring',
+    label: 'Мониторинг',
+    desc: 'Графики CPU, RAM и трафика в реальном времени. Аномальные пики — сигнал проблемы.',
+    navigateTo: '/servers',
+  },
+  {
+    target: 'open-console',
+    label: 'Консоль',
+    desc: 'SSH-доступ прямо из браузера. Вводи команды без терминала на компьютере.',
+    navigateTo: '/servers',
+  },
+  {
+    target: 'open-files',
+    label: 'Файловый менеджер',
+    desc: 'Загружай и управляй файлами на сервере. Олег проверит безопасность при загрузке.',
+    navigateTo: '/servers',
+  },
+  {
+    target: 'tour-firewall',
+    label: 'Firewall / Безопасность',
+    desc: 'Открытые порты и SSH-ключи. Оставь только 80, 443 и свой SSH-порт.',
+    navigateTo: '/servers',
+  },
+  {
+    target: 'tour-backups',
+    label: 'Резервные копии',
+    desc: 'Снапшоты каждые 24 часа. Откат к любой точке — "машина времени" для сервера.',
+    navigateTo: '/servers',
+  },
+  {
+    target: 'billing-summary',
+    label: 'Счета — баланс',
+    desc: 'Текущий баланс и прогноз расходов. Пополняй вовремя — сервер не остановится.',
+    navigateTo: '/billing',
+  },
+  {
+    target: 'billing-invoices',
+    label: 'История платежей',
+    desc: 'Все счета и платежи за всё время. Экспорт в CSV для бухгалтерии.',
+    navigateTo: '/billing',
+  },
+  {
+    target: 'billing-payment-method',
+    label: 'Способ оплаты',
+    desc: 'Привязанные карты и автосписание. Добавляй карты безопасно — данные шифруются.',
+    navigateTo: '/billing',
+  },
+];

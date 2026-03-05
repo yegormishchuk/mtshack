@@ -273,35 +273,41 @@ export function BillingPage() {
       <PageHeader />
 
       <div className="billing-grid">
-        <BalanceCard
-          balance={data.balance}
-          currency={data.currency}
-          dailyCost={data.dailyCost}
-          nextInvoice={data.nextInvoice}
-          onTopUp={() => dispatch({ type: 'SHOW_TOP_UP' })}
-          onPayNext={handlePayNext}
-          paying={state.payingNext}
-        />
+        <div data-tour="billing-summary">
+          <BalanceCard
+            balance={data.balance}
+            currency={data.currency}
+            dailyCost={data.dailyCost}
+            nextInvoice={data.nextInvoice}
+            onTopUp={() => dispatch({ type: 'SHOW_TOP_UP' })}
+            onPayNext={handlePayNext}
+            paying={state.payingNext}
+          />
+        </div>
         <UsageForecastCard
           balance={data.balance}
           currency={data.currency}
           dailyCost={data.dailyCost}
         />
-        <PaymentMethodsCard
-          methods={data.paymentMethods}
-          autoCharge={data.autoCharge}
-          onToggleAutoCharge={handleToggleAutoCharge}
-          onAddCard={() => dispatch({ type: 'SHOW_ADD_CARD' })}
-          toggling={state.togglingAutoCharge}
-        />
+        <div data-tour="billing-payment-method">
+          <PaymentMethodsCard
+            methods={data.paymentMethods}
+            autoCharge={data.autoCharge}
+            onToggleAutoCharge={handleToggleAutoCharge}
+            onAddCard={() => dispatch({ type: 'SHOW_ADD_CARD' })}
+            toggling={state.togglingAutoCharge}
+          />
+        </div>
       </div>
 
-      <InvoicesTable
-        invoices={data.invoices}
-        onPay={handlePayInvoice}
-        onExportCsv={() => paymentsApi.exportCsv(data.invoices)}
-        payingId={state.payingInvoiceId}
-      />
+      <div data-tour="billing-invoices">
+        <InvoicesTable
+          invoices={data.invoices}
+          onPay={handlePayInvoice}
+          onExportCsv={() => paymentsApi.exportCsv(data.invoices)}
+          payingId={state.payingInvoiceId}
+        />
+      </div>
 
       {state.showAddCard && (
         <AddCardModal

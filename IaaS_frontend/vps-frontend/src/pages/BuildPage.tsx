@@ -245,7 +245,7 @@ export function BuildPage() {
   const [selectedRegionId, setSelectedRegionId] = useState<string>('by-minsk');
 
   // Oleg assistant integration
-  const { appState, currentStepId } = useAssistantStore();
+  const { appState, currentStepId, setSpotlight } = useAssistantStore();
   const { olegPlan, olegOs, olegRegion, olegBilling } = appState;
 
   // Apply Oleg's selections to local state when they are set
@@ -271,6 +271,27 @@ export function BuildPage() {
   }, [olegPlan]);
 
   const isOlegActive = currentStepId === 'build-config';
+
+  // Spotlight cycling: plan → OS → region → billing → continue → all-at-once
+  const spotlightCycledRef = useRef(false);
+  useEffect(() => {
+    if (!isOlegActive) {
+      spotlightCycledRef.current = false;
+      return;
+    }
+    if (spotlightCycledRef.current) return;
+    spotlightCycledRef.current = true;
+
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    timers.push(setTimeout(() => setSpotlight('oleg-plan-card'), 300));
+    timers.push(setTimeout(() => setSpotlight('oleg-os-card'), 1600));
+    timers.push(setTimeout(() => setSpotlight('oleg-region-selected'), 2900));
+    timers.push(setTimeout(() => setSpotlight('oleg-billing-selected'), 4200));
+    timers.push(setTimeout(() => setSpotlight('build-continue'), 5500));
+    // Show all simultaneously — keep CSS rings, remove dark overlay
+    timers.push(setTimeout(() => setSpotlight(null), 6800));
+    return () => timers.forEach(clearTimeout);
+  }, [isOlegActive, setSpotlight]);
 
   const selectedPlan = PLANS.find((plan) => plan.id === selectedPlanId) ?? null;
   const selectedOs = OS_OPTIONS.find((os) => os.id === selectedOsId) ?? null;
@@ -623,20 +644,29 @@ export function BuildPage() {
         data-tour="region-select"
       >
         <div className="build-region-inner">
-          <h2 id="build-region-title" className="build-region-title">
-            Выбор региона
-          </h2>
+          <div className="build-section-header-row">
+            <h2 id="build-region-title" className="build-region-title">
+              Выбор региона
+            </h2>
+            {isOlegActive && olegRegion && (
+              <span className="oleg-selected-badge">✦ Выбрано Олегом</span>
+            )}
+          </div>
 
           <div className="build-region-options">
             {REGIONS.map((region) => {
               const isActive = selectedRegionId === region.id;
+              const isOlegPick = isOlegActive && olegRegion === region.id;
               return (
                 <button
                   key={region.id}
                   type="button"
-                  className={`build-os-btn${
-                    isActive ? ' build-os-btn-active' : ''
-                  }`}
+                  className={[
+                    'build-os-btn',
+                    isActive ? 'build-os-btn-active' : '',
+                    isOlegPick ? 'oleg-selected-btn' : '',
+                  ].filter(Boolean).join(' ')}
+                  data-tour={isOlegPick ? 'oleg-region-selected' : undefined}
                   disabled={!selectedPlan || !selectedOs}
                   onClick={() => setSelectedRegionId(region.id)}
                 >
@@ -656,20 +686,33 @@ export function BuildPage() {
         aria-labelledby="build-billing-title"
       >
         <div className="build-billing-inner">
-          <h2 id="build-billing-title" className="build-billing-title">
-            Выбор цикла оплаты
-          </h2>
+          <div className="build-section-header-row">
+            <h2 id="build-billing-title" className="build-billing-title">
+              Выбор цикла оплаты
+            </h2>
+            {isOlegActive && olegBilling && (
+              <span className="oleg-selected-badge">✦ Выбрано Олегом</span>
+            )}
+          </div>
 
           <div className="build-billing-options">
             {BILLING_CYCLES.map((cycle) => {
               const isActive = selectedBillingCycleId === cycle.id;
+              const isOlegPick = isOlegActive && (
+                olegBilling === cycle.id ||
+                (olegBilling === 'yearly' && cycle.id === 'yearly') ||
+                (olegBilling === 'monthly' && cycle.id === 'monthly')
+              );
               return (
                 <button
                   key={cycle.id}
                   type="button"
-                  className={`build-os-btn${
-                    isActive ? ' build-os-btn-active' : ''
-                  }`}
+                  className={[
+                    'build-os-btn',
+                    isActive ? 'build-os-btn-active' : '',
+                    isOlegPick ? 'oleg-selected-btn' : '',
+                  ].filter(Boolean).join(' ')}
+                  data-tour={isOlegPick ? 'oleg-billing-selected' : undefined}
                   disabled={!selectedPlan || !selectedOs || !selectedRegionId}
                   onClick={() => setSelectedBillingCycleId(cycle.id)}
                 >
@@ -685,13 +728,32 @@ export function BuildPage() {
         className="build-selection-panel"
         aria-label="Итоговая конфигурация сервера"
       >
-        <div className="build-selection-step build-selection-step-summary">
+        <div className={`build-selection-step build-selection-step-summary${isOlegActive && selectedPlan ? ' oleg-summary-active' : ''}`}>
           {selectedPlan ? (
             <>
-              <p className="build-selection-step-label">Итог</p>
-              <h3 className="build-selection-step-title">
-                Конфигурация вашего сервера
-              </h3>
+              {isOlegActive ? (
+                <>
+                  <div className="oleg-summary-header">
+                    <span className="oleg-selected-badge">✦ Олег</span>
+                    <h3 className="build-selection-step-title oleg-summary-title">
+                      Я всё подобрал ✅
+                    </h3>
+                  </div>
+                  <p className="oleg-summary-lineup">
+                    Тариф: <strong>{selectedPlan.title}</strong>
+                    {' • '}ОС: <strong>{selectedOs?.name ?? 'Ubuntu'}</strong>
+                    {' • '}Регион: {selectedRegion.flag} <strong>{selectedRegion.name.split(',')[0]}</strong>
+                    {' • '}Оплата: <strong>{selectedBillingCycle.label}</strong>
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="build-selection-step-label">Итог</p>
+                  <h3 className="build-selection-step-title">
+                    Конфигурация вашего сервера
+                  </h3>
+                </>
+              )}
 
               <div className="build-selection-plan-card">
                 <p className="build-selection-plan-title">
@@ -721,7 +783,9 @@ export function BuildPage() {
               </div>
 
               <div className="build-summary-total">
-                <p className="build-summary-total-label">Вы выбрали</p>
+                <p className="build-summary-total-label">
+                  {isOlegActive ? 'Олег выбрал' : 'Вы выбрали'}
+                </p>
                 {selectedOs && (
                   <p className="build-summary-total-hint">
                     ОС: <strong>{selectedOs.name}</strong> ({selectedOs.family})
@@ -744,8 +808,16 @@ export function BuildPage() {
                   className="build-plan-btn build-plan-btn-primary build-summary-pay-btn"
                   disabled={!selectedPlan || !selectedOs}
                 >
-                  {isOlegActive ? '✅ Оформить (выбрано Олегом)' : 'Перейти к оплате'}
+                  {isOlegActive ? '🚀 Создать сервер' : 'Перейти к оплате'}
                 </button>
+                {isOlegActive && (
+                  <button
+                    type="button"
+                    className="build-plan-btn build-plan-btn-ghost build-summary-change-btn"
+                  >
+                    Изменить выбор
+                  </button>
+                )}
               </div>
             </>
           ) : (
