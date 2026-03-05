@@ -600,3 +600,15 @@
     color: #6b7280;
   }
 }
+
+@media (max-width: 480px) {
+  .acct-table-row {
+    grid-template-columns: 1fr;
+    row-gap: 4px;
+    padding: 10px 12px;
+  }
+
+  .acct-header {
+    gap: 10px;
+  }
+}

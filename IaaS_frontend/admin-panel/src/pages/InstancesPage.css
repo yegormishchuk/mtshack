@@ -390,3 +390,39 @@
     display: none;
   }
 }
+
+@media (max-width: 480px) {
+  .inst-table-header {
+    display: none;
+  }
+
+  .inst-row {
+    grid-template-columns: 1fr 1fr;
+    row-gap: 6px;
+    padding: 12px;
+  }
+
+  .inst-row > *:nth-child(n+3) {
+    font-size: 11px;
+    color: #666;
+  }
+
+  .inst-toolbar {
+    gap: 10px;
+  }
+
+  .filter-chips {
+    flex-wrap: wrap;
+  }
+
+  .page-header {
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .page-title {
+    font-size: 20px;
+  }
+
+}

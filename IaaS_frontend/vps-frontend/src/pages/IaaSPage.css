@@ -90,3 +90,13 @@
   }
 }
 
+
+@media (max-width: 480px) {
+  .iaas-hero-title {
+    font-size: 22px;
+  }
+
+  .iaas-hero {
+    padding-inline: 12px;
+  }
+}

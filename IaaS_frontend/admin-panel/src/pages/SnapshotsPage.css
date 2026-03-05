@@ -417,3 +417,29 @@
     display: none;
   }
 }
+
+@media (max-width: 480px) {
+  .snaps-stats-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .snaps-table-header {
+    display: none;
+  }
+
+  .snaps-row {
+    grid-template-columns: 1fr 1fr;
+    row-gap: 6px;
+    padding: 12px;
+  }
+  .page-header {
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .page-title {
+    font-size: 20px;
+  }
+
+}

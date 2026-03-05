@@ -353,3 +353,47 @@
   }
 }
 
+
+@media (max-width: 600px) {
+  .page {
+    margin: 0 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page {
+    margin: 0 12px;
+    gap: 12px;
+  }
+
+  .page-title {
+    font-size: 22px;
+  }
+
+  .page-grid {
+    flex-direction: column;
+  }
+
+  .page-card {
+    border-radius: 16px;
+    padding: 14px;
+  }
+
+  .page-btn {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+
+  .page-header-row {
+    gap: 10px;
+  }
+
+  .page-description-row {
+    grid-template-columns: 1fr;
+    row-gap: 2px;
+  }
+
+  .page-description-row dt {
+    font-size: 11px;
+  }
+}

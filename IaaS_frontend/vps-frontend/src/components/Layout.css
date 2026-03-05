@@ -112,6 +112,11 @@
   padding: 120px 0 40px;
 }
 
+/* ── Bottom nav (hidden on desktop) ── */
+.app-bottom-nav {
+  display: none;
+}
+
 @media (max-width: 768px) {
   .app-header-bar {
     gap: 16px;
@@ -122,6 +127,61 @@
     gap: 16px;
     font-size: 13px;
     flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 600px) {
+  .app-header {
+    display: none;
+  }
+
+  .app-main {
+    padding-top: 16px;
+    padding-bottom: 72px;
+  }
+
+  .app-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: #ffffff;
+    box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.12);
+    padding: 6px 0 max(6px, env(safe-area-inset-bottom));
+    align-items: center;
+    justify-content: space-around;
+  }
+
+  .app-bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 4px 8px;
+    color: #888888;
+    text-decoration: none;
+    border-radius: 10px;
+    transition: color 0.15s;
+    min-width: 52px;
+  }
+
+  .app-bottom-nav-item span {
+    font-size: 10px;
+    font-weight: 500;
+  }
+
+  .app-bottom-nav-item svg {
+    opacity: 0.6;
+  }
+
+  .app-bottom-nav-item-active {
+    color: #ff0023;
+  }
+
+  .app-bottom-nav-item-active svg {
+    opacity: 1;
   }
 }
 

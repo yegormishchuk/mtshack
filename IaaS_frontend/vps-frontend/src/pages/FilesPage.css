@@ -326,3 +326,14 @@
   color: #FF0023;
   font-weight: 600;
 }
+
+/* ── Mobile ─────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .files-root {
+    padding: 12px;
+  }
+
+  .files-title {
+    font-size: 20px;
+  }
+}

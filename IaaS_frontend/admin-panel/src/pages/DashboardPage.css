@@ -542,3 +542,30 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+@media (max-width: 480px) {
+  .dash-kpi-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .dash-mid-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .proj-table-header {
+    display: none;
+  }
+
+  .proj-table-row {
+    grid-template-columns: 1fr 1fr;
+    row-gap: 4px;
+    padding: 10px;
+  }
+
+  .dash-page-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+}

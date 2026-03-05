@@ -1235,3 +1235,29 @@ section.page.page-wide {
     justify-content: center;
   }
 }
+
+@media (max-width: 480px) {
+  section.page.page-wide {
+    padding: 0 12px 40px;
+  }
+
+  .balance-card-amount,
+  .forecast-card-value {
+    font-size: 32px;
+  }
+
+  .topup-amounts {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .invoices-table-header {
+    display: none;
+  }
+
+  .invoices-table-row {
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 12px;
+  }
+}

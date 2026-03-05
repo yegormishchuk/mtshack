@@ -441,3 +441,30 @@
     display: none;
   }
 }
+
+@media (max-width: 480px) {
+  .ptable-header {
+    display: none;
+  }
+
+  .ptable-row {
+    grid-template-columns: 1fr 1fr;
+    row-gap: 6px;
+    padding: 12px;
+  }
+
+  .ptable-row > *:nth-child(n+3) {
+    font-size: 11px;
+    color: #666;
+  }
+  .page-header {
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .page-title {
+    font-size: 20px;
+  }
+
+}

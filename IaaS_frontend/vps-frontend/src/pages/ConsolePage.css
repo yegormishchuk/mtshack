@@ -307,3 +307,24 @@
     width: 100%;
   }
 }
+
+@media (max-width: 480px) {
+  .console-root {
+    padding: 8px;
+    gap: 12px;
+    min-height: calc(100vh - 80px);
+  }
+
+  .console-server-card {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .console-prompt {
+    font-size: 10px;
+  }
+
+  .console-input {
+    font-size: 12px;
+  }
+}

@@ -792,3 +792,22 @@
   border: 2px solid var(--ass-red) !important;
   box-shadow: 0 0 0 4px var(--ass-red-glow) !important;
 }
+
+/* ── Mobile ─────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .ass-fab {
+    bottom: 80px;
+    right: 16px;
+    height: 46px;
+    padding: 0 18px;
+    font-size: 11px;
+  }
+
+  .ass-widget {
+    bottom: 80px;
+    right: 8px;
+    left: 8px;
+    width: auto;
+    max-height: calc(100vh - 96px);
+  }
+}

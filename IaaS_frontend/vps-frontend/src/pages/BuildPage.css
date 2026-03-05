@@ -792,3 +792,15 @@
   }
 }
 
+
+@media (max-width: 480px) {
+  .build-hero-title {
+    font-size: 24px;
+  }
+
+  .build-hero-inner,
+  .build-os-guide-inner,
+  .build-selection-panel {
+    padding-inline: 12px;
+  }
+}

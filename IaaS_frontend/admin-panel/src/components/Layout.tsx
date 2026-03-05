@@ -43,6 +43,20 @@ export function Layout({ children }: { children: ReactNode }) {
         </div>
       </header>
       <main className="admin-main">{children}</main>
+      <nav className="admin-bottom-nav" aria-label="Мобильная навигация">
+        {NAV_ITEMS.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            end={item.end}
+            className={({ isActive }) =>
+              `admin-bottom-nav-item ${isActive ? 'admin-bottom-nav-item-active' : ''}`
+            }
+          >
+            <span>{item.label}</span>
+          </NavLink>
+        ))}
+      </nav>
       <Toast />
     </div>
   );
