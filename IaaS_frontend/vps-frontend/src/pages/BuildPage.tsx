@@ -343,7 +343,7 @@ export function BuildPage() {
         </div>
       </header>
 
-      <section className="build-explore" aria-labelledby="build-explore-title">
+      <section className="build-explore" aria-labelledby="build-explore-title" data-tour="server-config">
         <div className="build-explore-inner">
           <div className="build-explore-heading">
             <div className="build-explore-title-wrap">
@@ -570,6 +570,7 @@ export function BuildPage() {
       <section
         className="build-region-section"
         aria-labelledby="build-region-title"
+        data-tour="region-select"
       >
         <div className="build-region-inner">
           <h2 id="build-region-title" className="build-region-title">

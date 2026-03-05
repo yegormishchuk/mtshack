@@ -9,6 +9,7 @@ import './Page.css';
 import './BuildPage.css';
 import { ServerFileManager } from '../components/ServerFileManager';
 import { MetricChart } from '../components/MetricChart';
+import deloreanImg from '../assets/delorean/delorean.png';
 
 // ── Mock data generator ────────────────────────────────────────────────── //
 
@@ -148,6 +149,30 @@ const SERVER_TABS: { id: ServerDetailTab; label: string }[] = [
   { id: 'files', label: 'Файлы' }
 ];
 
+type TravelPhase = 'idle' | 'shaking' | 'flying' | 'flash' | 'success' | 'error';
+
+const delay = (ms: number) => new Promise<void>((res) => setTimeout(res, ms));
+
+const TIMELINE_POINTS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60].map((m) => ({
+  minutes: m,
+  label: `${m}m`,
+}));
+
+const HOUR_POINTS = Array.from({ length: 23 }, (_, i) => i + 2); // 2h … 24h
+
+function minutesToPct(minutes: number): number {
+  const step = 100 / (TIMELINE_POINTS.length - 1);
+  for (let i = 0; i < TIMELINE_POINTS.length - 1; i++) {
+    if (minutes <= TIMELINE_POINTS[i + 1].minutes) {
+      const t =
+        (minutes - TIMELINE_POINTS[i].minutes) /
+        (TIMELINE_POINTS[i + 1].minutes - TIMELINE_POINTS[i].minutes);
+      return (i + t) * step;
+    }
+  }
+  return 100;
+}
+
 export function ServerDetailPage() {
   const { vmId } = useParams<{ vmId: string }>();
   const navigate = useNavigate();
@@ -168,6 +193,7 @@ export function ServerDetailPage() {
   const [selectedTab, setSelectedTab] = useState<ServerDetailTab>('dashboard');
   const [backupOffsetMinutes, setBackupOffsetMinutes] = useState(15);
   const [backupCreateSnapshot, setBackupCreateSnapshot] = useState(true);
+  const [travelPhase, setTravelPhase] = useState<TravelPhase>('idle');
 
   // Live metrics from /resources/{name}/metrics
   const [liveMetrics, setLiveMetrics] = useState<LiveMetrics | null>(null);
@@ -246,6 +272,43 @@ export function ServerDetailPage() {
   }
 
   const { project, vm } = found;
+
+  const safeOffset  = Math.max(5, Math.min(24 * 60, backupOffsetMinutes));
+  const nowDate     = new Date();
+  const targetDate  = new Date(nowDate.getTime() - safeOffset * 60_000);
+  const fmtTime     = (d: Date) =>
+    d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  const offsetMins  = safeOffset % 60;
+  const offsetHrs   = Math.floor(safeOffset / 60);
+  const humanOffset =
+    offsetHrs > 0
+      ? offsetMins > 0
+        ? `${offsetHrs}h ${offsetMins}m`
+        : `${offsetHrs}h`
+      : `${offsetMins}m`;
+  const carPct = minutesToPct(backupOffsetMinutes);
+  const activePointIdx = TIMELINE_POINTS.reduce<number>((best, pt, idx) =>
+    Math.abs(pt.minutes - backupOffsetMinutes) <
+    Math.abs(TIMELINE_POINTS[best].minutes - backupOffsetMinutes)
+      ? idx
+      : best,
+    0
+  );
+  const isBusy = travelPhase !== 'idle';
+
+  const runSequence = () => {
+    void (async () => {
+      setTravelPhase('shaking');
+      await delay(550);
+      setTravelPhase('flying');
+      await delay(1000);
+      setTravelPhase('flash');
+      await delay(220);
+      setTravelPhase('success');
+      await delay(3500);
+      setTravelPhase((p) => (p === 'success' ? 'idle' : p));
+    })();
+  };
 
   return (
     <section className="servers-root" aria-label="Сервер">
@@ -440,49 +503,170 @@ export function ServerDetailPage() {
           )}
 
           {selectedTab === 'backups' && (
-            <section className="page-card">
-              <h2 className="page-card-title">Откат на точку во времени</h2>
-              <p className="page-card-text">
-                Быстро верните виртуальную машину в предыдущее состояние, используя снапшоты и
-                журналы изменений.
-              </p>
+            <>
+              <div className="tt-container">
+                <div className="tt-machine">
+                  <div className="tt-machine-header">
+                    <h2 className="tt-machine-title">Time Travel</h2>
+                    <p className="tt-machine-subtitle">
+                      Restore your server to a previous state using snapshots and logs.
+                    </p>
+                  </div>
 
-              <div className="server-backups-layout">
-                <div className="server-backups-main">
-                  <div className="server-backups-slider-block">
-                    <label
-                      htmlFor="backup-offset-slider"
-                      className="server-backups-subtitle"
+                  {/* DeLorean car + interactive timeline */}
+                  <div className="tt-car-timeline-wrap">
+                    <div
+                      className={`tt-car-mover${
+                        travelPhase === 'shaking' ? ' tt-car--shaking' :
+                        travelPhase === 'flying' || travelPhase === 'flash' ? ' tt-car--flying' :
+                        ''
+                      }`}
+                      style={{ left: `${Math.min(92, Math.max(8, carPct))}%` }}
                     >
-                      Откат по времени
-                    </label>
+                      <div className="tt-car-float-wrap">
+                        <img
+                          src={deloreanImg}
+                          className="tt-delorean-img"
+                          alt="DeLorean Time Machine"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="tt-timeline">
+                      <div className="tt-timeline-line" />
+                      <div className="tt-timeline-points-row">
+                        {TIMELINE_POINTS.map((pt, idx) => (
+                          <button
+                            key={pt.minutes}
+                            type="button"
+                            className={`tt-point-item${idx === activePointIdx ? ' tt-point-item--active' : ''}`}
+                            onClick={() => setBackupOffsetMinutes(pt.minutes)}
+                            disabled={isBusy}
+                            title={pt.label}
+                          >
+                            <span className="tt-point-dot" />
+                            {pt.minutes % 15 === 0 && (
+                              <span className="tt-point-label">{pt.label}</span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Fine-grained minute slider */}
                     <input
                       id="backup-offset-slider"
                       type="range"
                       min={5}
-                      max={24 * 60}
+                      max={60}
                       step={5}
-                      value={backupOffsetMinutes}
-                      onChange={(event) =>
-                        setBackupOffsetMinutes(Number(event.target.value))
-                      }
-                      className="server-backups-slider"
+                      value={Math.min(60, backupOffsetMinutes)}
+                      onChange={(e) => setBackupOffsetMinutes(Number(e.target.value))}
+                      disabled={isBusy}
+                      className="tt-hidden-slider"
+                      aria-label="Выберите время отката"
                     />
-                    <div className="server-backups-slider-scale">
-                      <span>−5 мин</span>
-                      <span>−24 часа</span>
+                  </div>
+
+                  {/* Quick jump: hour buttons */}
+                  <div className="tt-hours-section">
+                    <div className="tt-hours-label">Quick jump</div>
+                    <div className="tt-hours-row">
+                      {HOUR_POINTS.map((h) => {
+                        const isActive = backupOffsetMinutes === h * 60;
+                        return (
+                          <button
+                            key={h}
+                            type="button"
+                            className={`tt-hour-btn${isActive ? ' tt-hour-btn--active' : ''}`}
+                            onClick={() => setBackupOffsetMinutes(h * 60)}
+                            disabled={isBusy}
+                          >
+                            {h}h
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
-                  <TimeTravelSummary
-                    offsetMinutes={backupOffsetMinutes}
-                    createSnapshot={backupCreateSnapshot}
-                    onToggleCreateSnapshot={setBackupCreateSnapshot}
-                    vmName={vm.name}
-                  />
+                  {/* Destination info card */}
+                  <div className="tt-dest-card">
+                    <div className="tt-dest-grid">
+                      <div className="tt-dest-info">
+                        <div className="tt-dest-label">Destination</div>
+                        <div className="tt-dest-value">{humanOffset} ago</div>
+                      </div>
+                      <div className="tt-dest-times">
+                        <span className="tt-dest-time">{fmtTime(nowDate)}</span>
+                        <span className="tt-dest-arrow">→</span>
+                        <span className="tt-dest-time tt-dest-time--target">
+                          {fmtTime(targetDate)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="tt-dest-divider" />
+                    <label className="tt-checkbox-row">
+                      <input
+                        type="checkbox"
+                        checked={backupCreateSnapshot}
+                        onChange={(e) => setBackupCreateSnapshot(e.target.checked)}
+                      />
+                      <span>Create snapshot before rollback</span>
+                    </label>
+                  </div>
+
+                  {/* CTA */}
+                  <button
+                    type="button"
+                    className={`tt-btn${isBusy ? ' tt-btn--active' : ''}`}
+                    onClick={runSequence}
+                    disabled={isBusy}
+                  >
+                    {isBusy ? (
+                      <><span className="tt-btn-spinner" />TRAVELING…</>
+                    ) : (
+                      'TIME TRAVEL'
+                    )}
+                  </button>
                 </div>
               </div>
-            </section>
+
+              {/* Phase: red flash */}
+              {travelPhase === 'flash' && (
+                <div className="tt-flash-overlay" aria-hidden="true" />
+              )}
+
+              {/* Phase: success / error toast */}
+              {(travelPhase === 'success' || travelPhase === 'error') && (
+                <div
+                  className={`tt-toast tt-toast--${travelPhase}`}
+                  role="alert"
+                  aria-live="assertive"
+                >
+                  <div className="tt-toast-icon">
+                    {travelPhase === 'success' ? '✓' : '✕'}
+                  </div>
+                  <div className="tt-toast-body">
+                    <div className="tt-toast-title">
+                      {travelPhase === 'success' ? 'Time travel complete' : 'Time travel failed'}
+                    </div>
+                    <div className="tt-toast-text">
+                      {travelPhase === 'success'
+                        ? 'Rollback applied successfully.'
+                        : 'An error occurred. Please try again.'}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="tt-toast-close"
+                    onClick={() => setTravelPhase('idle')}
+                    aria-label="Close notification"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+            </>
           )}
 
           {selectedTab === 'firewall' && (
@@ -904,5 +1088,3 @@ function TimeTravelSummary({
     </div>
   );
 }
-
-

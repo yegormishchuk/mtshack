@@ -10,7 +10,7 @@ export function IaaSPage() {
       <p className="iaas-hero-subtitle">
         Облако, которое разворачивает ваш проект вместе с вами
       </p>
-      <div className="iaas-hero-actions">
+      <div className="iaas-hero-actions" data-tour="hero-cta">
         <button type="button" className="iaas-btn iaas-btn-secondary">
           Войти
         </button>

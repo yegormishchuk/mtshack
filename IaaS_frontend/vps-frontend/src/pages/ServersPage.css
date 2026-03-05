@@ -1121,3 +1121,631 @@
   white-space: nowrap;
 }
 
+/* ═══════════════════════════════════════════════════════
+   TIME TRAVEL PAGE  (Backup / Rollback redesign)
+═══════════════════════════════════════════════════════ */
+
+/* Outer two-column container */
+.tt-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px;
+  background: #f4f4f4;
+  border-radius: 28px;
+  box-shadow: 0 4px 28px rgba(0, 0, 0, 0.07);
+}
+
+/* ── Left column: Server info card ── */
+.tt-server-card {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 2px 18px rgba(0, 0, 0, 0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-self: flex-start;
+}
+
+.tt-server-card-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9ca3af;
+}
+
+.tt-server-card-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: #111827;
+  word-break: break-all;
+  line-height: 1.3;
+}
+
+.tt-server-card-list {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.tt-server-card-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tt-server-card-row dt {
+  font-size: 12px;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.tt-server-card-row dd {
+  font-size: 12px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+  text-align: right;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.tt-status-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Right column: Time machine ── */
+.tt-machine {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.tt-machine-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tt-machine-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #111827;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.tt-machine-subtitle {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ── DeLorean car + timeline wrapper ── */
+.tt-car-timeline-wrap {
+  position: relative;
+  padding-top: 130px;
+}
+
+.tt-car-mover {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  transition: left 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  pointer-events: none;
+}
+
+/* Transparent float wrapper — no background plate */
+.tt-car-float-wrap {
+  position: relative;
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: inline-flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* Soft blue anti-gravity glow under car */
+.tt-car-float-wrap::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 68%;
+  height: 20px;
+  background: radial-gradient(ellipse at center, rgba(96, 165, 250, 0.42) 0%, transparent 70%);
+  filter: blur(5px);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.tt-delorean-img {
+  width: 220px;
+  height: 112px;
+  display: block;
+  object-fit: contain;
+  object-position: center;
+  filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.18));
+}
+
+/* ── Timeline ── */
+.tt-timeline {
+  position: relative;
+  padding: 14px 0 6px;
+}
+
+.tt-timeline-line {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #d1d5db;
+  border-radius: 1px;
+  transform: translateY(-50%);
+}
+
+.tt-timeline-points-row {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tt-point-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  background: none;
+  border: none;
+  padding: 6px 4px;
+  cursor: pointer;
+}
+
+.tt-point-dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #d1d5db;
+  border: 2.5px solid #ffffff;
+  box-shadow: 0 0 0 1.5px #d1d5db;
+  transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+  position: relative;
+  z-index: 1;
+}
+
+.tt-point-item--active .tt-point-dot {
+  background: #FF3B30;
+  box-shadow: 0 0 0 2.5px rgba(255, 59, 48, 0.22), 0 0 10px rgba(255, 59, 48, 0.25);
+  transform: scale(1.35);
+}
+
+.tt-point-item:hover .tt-point-dot {
+  background: #FF3B30;
+  transform: scale(1.2);
+}
+
+.tt-point-label {
+  font-size: 11px;
+  color: #9ca3af;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: color 0.2s, font-weight 0.2s;
+}
+
+.tt-point-item--active .tt-point-label {
+  color: #FF3B30;
+  font-weight: 700;
+}
+
+/* Fine-grained slider */
+.tt-hidden-slider {
+  width: 100%;
+  margin-top: 10px;
+  accent-color: #FF3B30;
+  cursor: pointer;
+  height: 4px;
+}
+
+/* ── Quick jump: hour buttons ── */
+.tt-hours-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tt-hours-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #9ca3af;
+}
+
+.tt-hours-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tt-hour-btn {
+  background: #f3f4f6;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 999px;
+  padding: 5px 13px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
+  line-height: 1.4;
+}
+
+.tt-hour-btn:hover:not(.tt-hour-btn--active) {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #FF3B30;
+}
+
+.tt-hour-btn--active {
+  background: #FF3B30;
+  border-color: #FF3B30;
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(255, 59, 48, 0.35);
+}
+
+/* ── Destination info card ── */
+.tt-dest-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 20px 22px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 108px;
+}
+
+/* Two-column grid: info left, time pill right */
+.tt-dest-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.tt-dest-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tt-dest-divider {
+  height: 1px;
+  background: #f3f4f6;
+  margin-bottom: 14px;
+}
+
+.tt-dest-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #9ca3af;
+}
+
+.tt-dest-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.4px;
+  line-height: 1.2;
+}
+
+.tt-dest-times {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f9fafb;
+  padding: 8px 13px;
+  border-radius: 12px;
+  border: 1px solid #f0f0f0;
+  white-space: nowrap;
+  align-self: flex-start;
+}
+
+.tt-dest-time {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  font-variant-numeric: tabular-nums;
+}
+
+.tt-dest-time--target {
+  color: #FF3B30;
+}
+
+.tt-dest-arrow {
+  color: #d1d5db;
+  font-size: 16px;
+}
+
+.tt-checkbox-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  color: #4b5563;
+  cursor: pointer;
+  user-select: none;
+}
+
+.tt-checkbox-row input[type='checkbox'] {
+  accent-color: #FF3B30;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* ── CTA button ── */
+.tt-btn {
+  align-self: center;
+  background: #FF3B30;
+  color: #ffffff;
+  border: none;
+  border-radius: 18px;
+  padding: 15px 52px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  box-shadow: 0 4px 22px rgba(255, 59, 48, 0.38);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.tt-btn:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 7px 30px rgba(255, 59, 48, 0.48);
+}
+
+.tt-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.tt-btn--active,
+.tt-btn:disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
+}
+
+/* ── Phase 1: SHAKE — engine vibration ── */
+.tt-car--shaking .tt-car-float-wrap {
+  animation: carShake 0.55s ease-in-out;
+}
+
+.tt-car--shaking .tt-car-float-wrap::after {
+  animation: tt-glow-pulse 0.28s ease-in-out infinite alternate;
+}
+
+/* ── Phase 2: FLY AWAY — accelerates into distance ── */
+.tt-car--flying .tt-car-float-wrap {
+  animation: carFlyAway 1s ease-in forwards;
+}
+
+.tt-car--flying .tt-car-float-wrap::after {
+  animation: carGlowStretch 0.55s ease-out forwards;
+}
+
+@keyframes carShake {
+  0%   { transform: translate(0,    0)    rotate(0deg); }
+  10%  { transform: translate(-1px, 0)    rotate(-0.4deg); }
+  20%  { transform: translate(2px,  -1px) rotate(0.5deg); }
+  30%  { transform: translate(-2px, 1px)  rotate(-0.5deg); }
+  40%  { transform: translate(2px,  0)    rotate(0.4deg); }
+  50%  { transform: translate(-1px, -1px) rotate(-0.3deg); }
+  60%  { transform: translate(1px,  1px)  rotate(0.3deg); }
+  70%  { transform: translate(-2px, 0)    rotate(-0.4deg); }
+  80%  { transform: translate(2px,  0)    rotate(0.4deg); }
+  90%  { transform: translate(-1px, 1px)  rotate(-0.2deg); }
+  100% { transform: translate(0,    0)    rotate(0deg); }
+}
+
+@keyframes carFlyAway {
+  0%   { transform: translate(0,     0)    scale(1);    opacity: 1;   filter: blur(0px); }
+  60%  { transform: translate(320px, -60px) scale(0.75); opacity: 0.9; filter: blur(0.6px); }
+  100% { transform: translate(620px, -140px) scale(0.45); opacity: 0;  filter: blur(1.2px); }
+}
+
+@keyframes carGlowStretch {
+  0%   { opacity: 0.5; transform: translateX(-50%) scaleX(1);   }
+  60%  { opacity: 0.8; transform: translateX(-50%) scaleX(2.5); }
+  100% { opacity: 0;   transform: translateX(-50%) scaleX(3);   }
+}
+
+@keyframes tt-glow-pulse {
+  from { opacity: 0.25; transform: translateX(-50%) scaleX(0.85); }
+  to   { opacity: 1;    transform: translateX(-50%) scaleX(1.4);  }
+}
+
+/* ── Phase 3: RED FLASH overlay ── */
+.tt-flash-overlay {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at center, #FF3B30 0%, #b91c1c 100%);
+  z-index: 300;
+  pointer-events: none;
+  animation: redFlash 0.22s ease forwards;
+}
+
+@keyframes redFlash {
+  0%   { opacity: 0; }
+  20%  { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+
+/* ── Phase 4: TOAST notification ── */
+.tt-toast {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  z-index: 400;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 16px 18px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.08);
+  min-width: 300px;
+  max-width: 380px;
+  animation: toastSlideIn 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes toastSlideIn {
+  from { opacity: 0; transform: translateY(24px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+.tt-toast-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.tt-toast--success .tt-toast-icon {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.tt-toast--error .tt-toast-icon {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.tt-toast-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.tt-toast-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.3;
+}
+
+.tt-toast-text {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.tt-toast-close {
+  background: none;
+  border: none;
+  font-size: 22px;
+  line-height: 1;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+
+.tt-toast-close:hover {
+  color: #374151;
+}
+
+/* ── Button spinner ── */
+.tt-btn-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: btnSpin 0.6s linear infinite;
+  vertical-align: middle;
+  margin-right: 7px;
+}
+
+@keyframes btnSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Reduced motion: skip kinetic animations ── */
+@media (prefers-reduced-motion: reduce) {
+  .tt-car--shaking .tt-car-float-wrap,
+  .tt-car--flying .tt-car-float-wrap {
+    animation: none;
+  }
+
+  .tt-flash-overlay {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .tt-container {
+    padding: 20px;
+    gap: 18px;
+    max-width: 100%;
+  }
+
+  .tt-machine-title {
+    font-size: 22px;
+  }
+
+  .tt-dest-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 600px) {
+  .tt-container {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .tt-btn {
+    padding: 13px 36px;
+    font-size: 13px;
+  }
+
+  .tt-toast {
+    bottom: 16px;
+    right: 16px;
+    left: 16px;
+    min-width: unset;
+    max-width: 100%;
+  }
+}
+

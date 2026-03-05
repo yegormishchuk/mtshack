@@ -9,9 +9,11 @@ import { AccountPage } from './pages/AccountPage';
 import { SshKeysPage } from './pages/SshKeysPage';
 import { ProjectWizardPage } from './pages/projects/ProjectWizardPage';
 import { ProjectDetailPage } from './pages/projects/ProjectDetailPage';
+import { AssistantWidget } from './assistant/components/AssistantWidget';
 
 export default function App() {
   return (
+    <>
     <Layout>
       <Routes>
         <Route path="/" element={<IaaSPage />} />
@@ -27,6 +29,8 @@ export default function App() {
         <Route path="*" element={<Navigate to="/servers" replace />} />
       </Routes>
     </Layout>
+    <AssistantWidget />
+    </>
   );
 }
 
