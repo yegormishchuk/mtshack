@@ -1,8 +1,24 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import type { ProjectTab, VM } from '../../domain/iaasTypes';
+import type { ProjectTab, VM, VmRole } from '../../domain/iaasTypes';
 import { useProjectsStore } from '../../store/projectsStore';
 import type { SnapshotInfo } from '../../store/projectsStore';
+
+const ROLE_OPTIONS: { role: VmRole; label: string; desc: string }[] = [
+  { role: 'backend',  label: 'Backend',     desc: 'API-сервер, бизнес-логика' },
+  { role: 'frontend', label: 'Frontend',    desc: 'Веб-интерфейс, статика' },
+  { role: 'db',       label: 'База данных', desc: 'PostgreSQL, MySQL и т.д.' },
+  { role: 'worker',   label: 'Worker',      desc: 'Фоновые задачи, очереди' },
+  { role: 'proxy',    label: 'Proxy',       desc: 'Nginx, балансировщик' },
+  { role: 'vpn',      label: 'VPN',         desc: 'WireGuard-шлюз' },
+  { role: 'custom',   label: 'Custom',      desc: 'Произвольная роль' },
+];
+
+const SIZE_OPTIONS: { size: 's' | 'm' | 'l'; label: string; specs: string }[] = [
+  { size: 's', label: 'Small',  specs: '1 vCPU · 512 MB · 10 GB' },
+  { size: 'm', label: 'Medium', specs: '2 vCPU · 1 GB · 20 GB' },
+  { size: 'l', label: 'Large',  specs: '4 vCPU · 2 GB · 40 GB' },
+];
 import { api } from '../../services/api';
 import './ProjectsPages.css';
 import '../ServersPage.css';
@@ -168,6 +184,7 @@ export function ProjectDetailPage() {
   const vmAction = useProjectsStore((state) => state.vmAction);
   const deleteVmOnApi = useProjectsStore((state) => state.deleteVmOnApi);
   const deleteProjectOnApi = useProjectsStore((state) => state.deleteProjectOnApi);
+  const addServiceToProjectOnApi = useProjectsStore((state) => state.addServiceToProjectOnApi);
   const addToast = useProjectsStore((state) => state.addToast);
 
   const project = useMemo(
@@ -183,6 +200,25 @@ export function ProjectDetailPage() {
   const [vmBusy, setVmBusy] = useState<Record<string, boolean>>({});
   const [showSnapshotsFor, setShowSnapshotsFor] = useState<Record<string, boolean>>({});
   const [deletingProject, setDeletingProject] = useState(false);
+
+  // Add service modal
+  const [showAddService, setShowAddService] = useState(false);
+  const [addServiceRole, setAddServiceRole] = useState<VmRole>('backend');
+  const [addServiceSize, setAddServiceSize] = useState<'s' | 'm' | 'l'>('s');
+  const [addServiceLoading, setAddServiceLoading] = useState(false);
+
+  const handleAddService = async () => {
+    if (!project) return;
+    setAddServiceLoading(true);
+    try {
+      await addServiceToProjectOnApi({ projectId: project.id, role: addServiceRole, size: addServiceSize });
+      setShowAddService(false);
+    } catch {
+      // error surfaced via toast in store
+    } finally {
+      setAddServiceLoading(false);
+    }
+  };
 
   const handleVmAction = async (vmId: string, action: 'start' | 'stop' | 'restart') => {
     setVmBusy((prev) => ({ ...prev, [vmId]: true }));
@@ -426,6 +462,17 @@ export function ProjectDetailPage() {
 
           {selectedTab === 'overview' && (
             <div className="servers-list">
+              <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 8, width: '100%', maxWidth: 1254 }}>
+                <button
+                  type="button"
+                  className="project-card-open-btn"
+                  onClick={() => { setAddServiceRole('backend'); setAddServiceSize('s'); setShowAddService(true); }}
+                  style={{ display: 'flex', alignItems: 'left', gap: 6 }}
+                >
+                  <span style={{ fontSize: 16, lineHeight: 1 }}>+</span> Добавить сервис
+                </button>
+              </div>
+
               {project.resources.vms.map((vm) => {
                 const isBusy = vmBusy[vm.id] ?? false;
                 const snapsOpen = showSnapshotsFor[vm.id] ?? false;
@@ -539,6 +586,99 @@ export function ProjectDetailPage() {
           {selectedTab === 'network' && <ProjectNetworkTab project={project} />}
         </section>
       </div>
+      {/* Add Service Modal */}
+      {showAddService && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 200,
+            background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowAddService(false); }}
+        >
+          <div style={{
+            background: '#fff', borderRadius: 24, padding: 28, width: 480, maxWidth: '92vw',
+            boxShadow: '0 28px 70px rgba(0,0,0,0.22)',
+          }}>
+            <h2 style={{ margin: '0 0 4px', fontSize: 18, fontWeight: 700 }}>Добавить сервис</h2>
+            <p style={{ margin: '0 0 20px', fontSize: 13, color: '#6b7280' }}>
+              Запустит новый инстанс в сети проекта <strong>{project.name}</strong>.
+            </p>
+
+            <div style={{ marginBottom: 18 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: '#9ca3af', marginBottom: 8 }}>
+                Роль сервиса
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                {ROLE_OPTIONS.map(({ role, label, desc }) => (
+                  <button
+                    key={role}
+                    type="button"
+                    onClick={() => setAddServiceRole(role)}
+                    style={{
+                      border: addServiceRole === role ? '2px solid #FF0023' : '1.5px solid #e5e7eb',
+                      borderRadius: 14, padding: '10px 14px', textAlign: 'left', cursor: 'pointer',
+                      background: addServiceRole === role ? 'rgba(255,0,35,0.05)' : '#f9f9f9',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    <div style={{ fontSize: 13, fontWeight: 700, color: addServiceRole === role ? '#FF0023' : '#111' }}>{label}</div>
+                    <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>{desc}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: '#9ca3af', marginBottom: 8 }}>
+                Размер
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {SIZE_OPTIONS.map(({ size, label, specs }) => (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => setAddServiceSize(size)}
+                    style={{
+                      flex: 1, border: addServiceSize === size ? '2px solid #FF0023' : '1.5px solid #e5e7eb',
+                      borderRadius: 14, padding: '10px 12px', textAlign: 'center', cursor: 'pointer',
+                      background: addServiceSize === size ? 'rgba(255,0,35,0.05)' : '#f9f9f9',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    <div style={{ fontSize: 13, fontWeight: 700, color: addServiceSize === size ? '#FF0023' : '#111' }}>{label}</div>
+                    <div style={{ fontSize: 10, color: '#6b7280', marginTop: 2 }}>{specs}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => setShowAddService(false)}
+                style={{ padding: '0 22px', height: 40, borderRadius: 999, border: '1.5px solid #e5e7eb', background: '#fff', cursor: 'pointer', fontSize: 14, fontWeight: 600 }}
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                onClick={() => { void handleAddService(); }}
+                disabled={addServiceLoading}
+                style={{
+                  padding: '0 28px', height: 40, borderRadius: 999, border: 'none',
+                  background: '#FF0023', color: '#fff',
+                  cursor: addServiceLoading ? 'wait' : 'pointer', fontSize: 14, fontWeight: 700,
+                  boxShadow: '0 8px 20px rgba(255,0,35,0.28)', opacity: addServiceLoading ? 0.7 : 1,
+                }}
+              >
+                {addServiceLoading ? 'Создание…' : 'Запустить'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <AIAssistantWidget
         mode="project"
         environment={{

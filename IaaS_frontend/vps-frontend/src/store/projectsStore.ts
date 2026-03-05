@@ -30,6 +30,12 @@ export interface CreateProjectApiOpts {
   size: 's' | 'm' | 'l';
 }
 
+export interface AddServiceOpts {
+  projectId: string;
+  role: VmRole;
+  size: 's' | 'm' | 'l';
+}
+
 export interface ProjectsState extends UiState {
   projects: Project[];
   nextId: number;
@@ -65,6 +71,7 @@ export interface ProjectsState extends UiState {
   loadProjects(): Promise<void>;
   createProjectOnApi(opts: CreateProjectApiOpts): Promise<string>;
   deleteProjectOnApi(projectId: string): Promise<void>;
+  addServiceToProjectOnApi(opts: AddServiceOpts): Promise<VM>;
   vmAction(vmId: string, action: 'start' | 'stop' | 'restart'): Promise<void>;
   deleteVmOnApi(vmId: string, projectId: string): Promise<void>;
   loadSnapshots(instanceName: string): Promise<void>;
@@ -171,19 +178,22 @@ function mapRawInstanceToVm(inst: Record<string, any>, projectId: string): VM {
   const cpuLimit = config['limits.cpu'] ? parseInt(String(config['limits.cpu'])) : 1;
   const memMB = parseMemoryMB(config['limits.memory']);
 
+  const cpu = cpuLimit || 1;
+  const ram = Math.max(1, Math.round(memMB / 1024));
+  const disk = 20;
   return {
     id: String(inst.name),
     projectId,
     name: String(inst.name),
     role: guessRole(String(inst.name)),
     os: 'Ubuntu 22.04',
-    cpu: cpuLimit || 1,
-    ram: Math.max(1, Math.round(memMB / 1024)),
-    disk: 20,
+    cpu,
+    ram,
+    disk,
     privateIp,
     publicIp,
     state,
-    monthlyCost: 0,
+    monthlyCost: calcMonthlyCost(cpu, ram, disk),
     portsOpen: [],
   };
 }
@@ -195,6 +205,11 @@ function mapRawSnapshot(snap: Record<string, any>): SnapshotInfo {
     created_at: snap.created_at ?? snap.createdAt,
     stateful: snap.stateful ?? false,
   };
+}
+
+// BYN pricing: 5/vCPU + 2/GB RAM + 0.3/GB Disk
+export function calcMonthlyCost(cpu: number, ramGb: number, diskGb: number): number {
+  return Math.round((cpu * 5 + ramGb * 2 + diskGb * 0.3) * 10) / 10;
 }
 
 function sizeConfig(size: 's' | 'm' | 'l'): Record<string, string> {
@@ -546,17 +561,20 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
           // Instance might already be starting or start is async - ignore
         }
 
+        const vmCpu = parseInt(cfg['limits.cpu']);
+        const vmRam = parseMemoryMB(cfg['limits.memory']) / 1024;
+        const vmDisk = parseInt(diskSize);
         createdVms.push({
           id: vmName,
           projectId: networkName,
           name: vmName,
           role,
           os: 'Ubuntu 22.04',
-          cpu: parseInt(cfg['limits.cpu']),
-          ram: parseMemoryMB(cfg['limits.memory']) / 1024,
-          disk: 20,
+          cpu: vmCpu,
+          ram: vmRam,
+          disk: vmDisk,
           state: 'provisioning',
-          monthlyCost: 0,
+          monthlyCost: calcMonthlyCost(vmCpu, vmRam, vmDisk),
           portsOpen: [],
         });
       }
@@ -650,6 +668,56 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
       });
       throw err;
     }
+  },
+
+  async addServiceToProjectOnApi({ projectId, role, size }) {
+    const cfg = sizeConfig(size);
+    const diskSize = size === 'l' ? '40GB' : size === 'm' ? '20GB' : '10GB';
+    const suffix = Math.random().toString(36).slice(2, 6);
+    const vmName = `${projectId}-${roleSuffix(role)}-${suffix}`;
+
+    await api.createInstance({
+      name: vmName,
+      network_name: projectId,
+      disk: diskSize,
+      config: {
+        ...cfg,
+        'user.project_network': projectId,
+      },
+    });
+
+    try {
+      await api.instanceAction(vmName, 'start');
+    } catch { /* ignore */ }
+
+    const vmCpu = parseInt(cfg['limits.cpu']);
+    const vmRam = parseMemoryMB(cfg['limits.memory']) / 1024;
+    const vmDisk = parseInt(diskSize);
+    const vm: VM = {
+      id: vmName,
+      projectId,
+      name: vmName,
+      role,
+      os: 'Ubuntu 22.04',
+      cpu: vmCpu,
+      ram: vmRam,
+      disk: vmDisk,
+      state: 'provisioning',
+      monthlyCost: calcMonthlyCost(vmCpu, vmRam, vmDisk),
+      portsOpen: [],
+    };
+
+    set((s) => ({
+      projects: s.projects.map((p) =>
+        p.id !== projectId
+          ? p
+          : { ...p, resources: { ...p.resources, vms: [...p.resources.vms, vm] } }
+      ),
+    }));
+
+    window.setTimeout(() => get().updateVmState(vmName, 'running'), 3000);
+    get().addToast(`Сервис ${vmName} запускается…`);
+    return vm;
   },
 
   async vmAction(vmId, action) {

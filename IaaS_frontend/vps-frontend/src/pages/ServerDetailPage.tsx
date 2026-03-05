@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useProjectsStore } from '../store/projectsStore';
+import { useProjectsStore, calcMonthlyCost } from '../store/projectsStore';
 import { api } from '../services/api';
 import type { VM } from '../domain/iaasTypes';
 import './ServersPage.css';
@@ -323,7 +323,13 @@ export function ServerDetailPage() {
               {project.name} • {project.region}
             </p>
             <p className="projects-empty-text">
-              ОС: {vm.os} • ≈ {vm.monthlyCost.toFixed(0)} BYN/мес
+              ОС: {vm.os}
+            </p>
+            <p className="projects-empty-text" style={{ marginTop: 4 }}>
+              {vm.cpu} vCPU · {vm.ram} GB RAM · {vm.disk} GB
+            </p>
+            <p style={{ margin: '8px 0 0', fontSize: 15, fontWeight: 700, color: '#FF0023' }}>
+              ≈ {calcMonthlyCost(vm.cpu, vm.ram, vm.disk).toFixed(1)} BYN/мес
             </p>
           </div>
         </aside>
@@ -385,7 +391,7 @@ export function ServerDetailPage() {
                     </div>
                     <div className="build-plan-spec-row">
                       <dt>Стоимость</dt>
-                      <dd>≈ {vm.monthlyCost.toFixed(0)} BYN/мес</dd>
+                      <dd>≈ {calcMonthlyCost(vm.cpu, vm.ram, vm.disk).toFixed(1)} BYN/мес</dd>
                     </div>
                   </dl>
                 </section>
@@ -507,9 +513,9 @@ export function ServerDetailPage() {
               <div className="tt-container">
                 <div className="tt-machine">
                   <div className="tt-machine-header">
-                    <h2 className="tt-machine-title">Time Travel</h2>
+                    <h2 className="tt-machine-title">Машина Времени</h2>
                     <p className="tt-machine-subtitle">
-                      Restore your server to a previous state using snapshots and logs.
+                      Откатите сервер в предыдущее состояние с помощью снимков и логов.
                     </p>
                   </div>
 
@@ -570,7 +576,7 @@ export function ServerDetailPage() {
 
                   {/* Quick jump: hour buttons */}
                   <div className="tt-hours-section">
-                    <div className="tt-hours-label">Quick jump</div>
+                    <div className="tt-hours-label">Быстрый переход</div>
                     <div className="tt-hours-row">
                       {HOUR_POINTS.map((h) => {
                         const isActive = backupOffsetMinutes === h * 60;
@@ -582,7 +588,7 @@ export function ServerDetailPage() {
                             onClick={() => setBackupOffsetMinutes(h * 60)}
                             disabled={isBusy}
                           >
-                            {h}h
+                            {h}ч
                           </button>
                         );
                       })}
@@ -593,8 +599,8 @@ export function ServerDetailPage() {
                   <div className="tt-dest-card">
                     <div className="tt-dest-grid">
                       <div className="tt-dest-info">
-                        <div className="tt-dest-label">Destination</div>
-                        <div className="tt-dest-value">{humanOffset} ago</div>
+                        <div className="tt-dest-label">Назначение</div>
+                        <div className="tt-dest-value">{humanOffset} назад</div>
                       </div>
                       <div className="tt-dest-times">
                         <span className="tt-dest-time">{fmtTime(nowDate)}</span>
@@ -611,7 +617,7 @@ export function ServerDetailPage() {
                         checked={backupCreateSnapshot}
                         onChange={(e) => setBackupCreateSnapshot(e.target.checked)}
                       />
-                      <span>Create snapshot before rollback</span>
+                      <span>Создать снимок перед откатом</span>
                     </label>
                   </div>
 
@@ -623,9 +629,9 @@ export function ServerDetailPage() {
                     disabled={isBusy}
                   >
                     {isBusy ? (
-                      <><span className="tt-btn-spinner" />TRAVELING…</>
+                      <><span className="tt-btn-spinner" />ПЕРЕМЕЩЕНИЕ…</>
                     ) : (
-                      'TIME TRAVEL'
+                      'ПУТЕШЕСТВИЕ ВО ВРЕМЕНИ'
                     )}
                   </button>
                 </div>
@@ -648,19 +654,19 @@ export function ServerDetailPage() {
                   </div>
                   <div className="tt-toast-body">
                     <div className="tt-toast-title">
-                      {travelPhase === 'success' ? 'Time travel complete' : 'Time travel failed'}
+                      {travelPhase === 'success' ? 'Путешествие завершено' : 'Путешествие не удалось'}
                     </div>
                     <div className="tt-toast-text">
                       {travelPhase === 'success'
-                        ? 'Rollback applied successfully.'
-                        : 'An error occurred. Please try again.'}
+                        ? 'Откат применён успешно.'
+                        : 'Произошла ошибка. Попробуйте снова.'}
                     </div>
                   </div>
                   <button
                     type="button"
                     className="tt-toast-close"
                     onClick={() => setTravelPhase('idle')}
-                    aria-label="Close notification"
+                    aria-label="Закрыть уведомление"
                   >
                     ×
                   </button>
@@ -993,6 +999,67 @@ function ResourcesTab({ vm, apiLimits }: { vm: VM; apiLimits: LiveMetrics | null
           </div>
         </div>
       </div>
+
+      {/* Pricing estimate */}
+      {(() => {
+        const currentCost = calcMonthlyCost(initCpu, initRam, initDisk);
+        const newCost = calcMonthlyCost(cpu, ramGb, disk);
+        const diff = newCost - currentCost;
+        const cpuCost = cpu * 5;
+        const ramCost = ramGb * 2;
+        const diskCost = Math.round(disk * 0.3 * 10) / 10;
+        return (
+          <div style={{
+            marginTop: 20, borderRadius: 18, background: '#f9f9fb',
+            border: '1.5px solid #e5e7eb', padding: '16px 20px',
+          }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9ca3af', marginBottom: 14 }}>
+              Расчёт стоимости
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#374151' }}>
+                <span>{cpu} vCPU × 5 BYN</span>
+                <span style={{ fontWeight: 600 }}>{cpuCost.toFixed(1)} BYN</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#374151' }}>
+                <span>{formatRam(ramGb)} RAM × 2 BYN/GB</span>
+                <span style={{ fontWeight: 600 }}>{ramCost.toFixed(1)} BYN</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#374151' }}>
+                <span>{disk} GB Disk × 0.30 BYN/GB</span>
+                <span style={{ fontWeight: 600 }}>{diskCost.toFixed(1)} BYN</span>
+              </div>
+              <div style={{ height: 1, background: '#e5e7eb', margin: '4px 0' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 15, fontWeight: 700, color: '#111' }}>Итого / месяц</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  {hasChanges && currentCost !== newCost && (
+                    <span style={{ fontSize: 13, color: '#9ca3af', textDecoration: 'line-through' }}>
+                      {currentCost.toFixed(1)} BYN
+                    </span>
+                  )}
+                  <span style={{
+                    fontSize: 18, fontWeight: 800,
+                    color: diff > 0 ? '#FF0023' : diff < 0 ? '#16a34a' : '#111',
+                  }}>
+                    {newCost.toFixed(1)} BYN
+                  </span>
+                  {hasChanges && diff !== 0 && (
+                    <span style={{
+                      fontSize: 12, fontWeight: 700,
+                      color: diff > 0 ? '#FF0023' : '#16a34a',
+                      background: diff > 0 ? 'rgba(255,0,35,0.08)' : 'rgba(22,163,74,0.1)',
+                      padding: '2px 10px', borderRadius: 999,
+                    }}>
+                      {diff > 0 ? '+' : ''}{diff.toFixed(1)} BYN
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {hasChanges && (
         <div className="resource-changes-summary">
