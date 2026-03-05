@@ -9,6 +9,8 @@ import { AccountPage } from './pages/AccountPage';
 import { SshKeysPage } from './pages/SshKeysPage';
 import { ProjectWizardPage } from './pages/projects/ProjectWizardPage';
 import { ProjectDetailPage } from './pages/projects/ProjectDetailPage';
+import { ConsolePage } from './pages/ConsolePage';
+import { FilesPage } from './pages/FilesPage';
 import { AssistantWidget } from './assistant/components/AssistantWidget';
 
 export default function App() {
@@ -18,6 +20,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<IaaSPage />} />
         <Route path="/build" element={<BuildPage />} />
+        <Route path="/console" element={<ConsolePage />} />
+        <Route path="/files" element={<FilesPage />} />
         <Route path="/projects" element={<Navigate to="/servers?view=projects" replace />} />
         <Route path="/projects/new" element={<ProjectWizardPage />} />
         <Route path="/projects/:id" element={<ProjectDetailPage />} />
@@ -33,4 +37,3 @@ export default function App() {
     </>
   );
 }
-

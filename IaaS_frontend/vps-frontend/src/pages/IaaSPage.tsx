@@ -1,7 +1,26 @@
+import { useEffect } from 'react';
 import sparklesSymbol from '../assets/symbols/sparkles.svg';
+import { useAssistantStore } from '../assistant/store';
 import './IaaSPage.css';
 
 export function IaaSPage() {
+  const { open, isOpen, sendEvent, currentStepId } = useAssistantStore();
+
+  // Auto-open Oleg on landing
+  useEffect(() => {
+    if (!isOpen) {
+      const t = setTimeout(() => open(), 800);
+      return () => clearTimeout(t);
+    }
+  }, []);
+
+  const handleStart = () => {
+    if (!isOpen) open();
+    if (currentStepId === 'welcome') {
+      sendEvent('LETS_GO', undefined, 'Давай!');
+    }
+  };
+
   return (
     <section className="iaas-hero">
       <h1 className="iaas-hero-title">
@@ -14,8 +33,12 @@ export function IaaSPage() {
         <button type="button" className="iaas-btn iaas-btn-secondary">
           Войти
         </button>
-        <button type="button" className="iaas-btn iaas-btn-primary">
-          <span className="iaas-btn-primary-label">Начать с ИИ</span>
+        <button
+          type="button"
+          className="iaas-btn iaas-btn-primary"
+          onClick={handleStart}
+        >
+          <span className="iaas-btn-primary-label">Начать с Олегом</span>
           <img
             src={sparklesSymbol}
             alt=""
@@ -27,4 +50,3 @@ export function IaaSPage() {
     </section>
   );
 }
-

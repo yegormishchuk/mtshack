@@ -9,10 +9,10 @@ interface LayoutProps {
 }
 
 const NAV_ITEMS = [
-  { path: '/build', label: 'Сборка' },
-  { path: '/servers', label: 'Сервера' },
-  { path: '/billing', label: 'Счета' },
-  { path: '/account', label: 'Аккаунт' }
+  { path: '/build', label: 'Сборка', tour: 'nav-build' },
+  { path: '/servers', label: 'Сервера', tour: 'nav-servers' },
+  { path: '/billing', label: 'Счета', tour: 'nav-billing' },
+  { path: '/account', label: 'Аккаунт', tour: 'nav-account' },
 ] as const;
 
 export function Layout({ children }: LayoutProps) {
@@ -30,6 +30,7 @@ export function Layout({ children }: LayoutProps) {
                 key={item.path}
                 to={item.path}
                 end={item.path === '/servers'}
+                data-tour={item.tour}
                 className={({ isActive }) =>
                   `app-nav-item ${isActive ? 'app-nav-item-active' : ''}`
                 }

@@ -3,10 +3,10 @@ import { Loader, CheckCircle, Circle } from 'lucide-react';
 import { useAssistantStore } from '../store';
 
 const STAGES = [
-  { label: 'Allocating IP' },
-  { label: 'Provisioning VM' },
-  { label: 'Installing Docker' },
-  { label: 'Deploy Complete' },
+  { label: 'Подбираю железо...' },
+  { label: 'Создаю VM' },
+  { label: 'Настройка сети и Docker' },
+  { label: 'Сервер готов ✓' },
 ];
 
 type StageState = 'pending' | 'active' | 'done-s';
@@ -30,7 +30,7 @@ export function ProgressStages() {
             key={idx}
             className={`ass-stage ${state}`}
             initial={false}
-            animate={state === 'active' ? { backgroundColor: 'rgba(91,138,245,0.05)' } : {}}
+            animate={state === 'active' ? { backgroundColor: 'rgba(255,0,35,0.04)' } : {}}
           >
             <div className={`ass-stage-icon ${state}`}>
               <AnimatePresence mode="wait">

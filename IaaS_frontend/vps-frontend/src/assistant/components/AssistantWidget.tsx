@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Minus, X, Rocket } from 'lucide-react';
+import { Minus, X, Bot } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAssistantStore } from '../store';
 import { SCENARIO } from '../scenario';
 import { MissionHeader } from './MissionHeader';
@@ -9,10 +11,19 @@ import { SpotlightOverlay } from './SpotlightOverlay';
 import '../assistant.css';
 
 export function AssistantWidget() {
-  const { isOpen, isMinimized, currentStepId, open, close, minimize } =
+  const { isOpen, isMinimized, currentStepId, open, close, minimize, navigateTo, clearNavigation } =
     useAssistantStore();
 
+  const navigate = useNavigate();
   const step = SCENARIO[currentStepId];
+
+  // Handle navigation requests from scenario
+  useEffect(() => {
+    if (navigateTo) {
+      navigate(navigateTo);
+      clearNavigation();
+    }
+  }, [navigateTo, navigate, clearNavigation]);
 
   return (
     <div className="ass-root">
@@ -28,10 +39,10 @@ export function AssistantWidget() {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 320, damping: 22 }}
-            aria-label="Открыть Launch Assistant"
+            aria-label="Открыть Олега"
           >
-            <Rocket size={16} />
-            Launch
+            <Bot size={16} />
+            Олег
           </motion.button>
         )}
       </AnimatePresence>
@@ -99,7 +110,7 @@ export function AssistantWidget() {
                     borderTop: '1px solid var(--ass-border)',
                   }}
                 >
-                  Шаг {step?.stepIndex ?? 1}/{step?.totalSteps ?? 7} — {step?.card.title}
+                  Шаг {step?.stepIndex ?? 1}/{step?.totalSteps ?? 12} — {step?.card.title}
                 </motion.div>
               )}
             </AnimatePresence>

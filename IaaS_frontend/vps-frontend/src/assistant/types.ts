@@ -36,6 +36,12 @@ export interface CardConfig {
   showLogs?: boolean;
   showEnvForm?: boolean;
   isDone?: boolean;
+  // New step types for Oleg flow
+  isConsoleSetup?: boolean;
+  isRunProject?: boolean;
+  isFilesReview?: boolean;
+  isProvision?: boolean;
+  isTour?: boolean;
 }
 
 export interface ScenarioStep {
@@ -45,6 +51,7 @@ export interface ScenarioStep {
   card: CardConfig;
   spotlightTarget?: string;
   spotlightTooltip?: string;
+  navigateTo?: string;
   onEnterActions?: AppAction[];
   transitions: Record<string, string>;
 }
@@ -58,6 +65,15 @@ export interface FeedItem {
 
 export type DeployMode = 'autopilot' | 'manual';
 
+export interface UploadedFile {
+  name: string;
+  size: number;
+  ext: string;
+  flagged: boolean;
+  flagReason?: string;
+  removed: boolean;
+}
+
 export interface MockAppState {
   currentPage: string;
   serverType: string | null;
@@ -67,6 +83,22 @@ export interface MockAppState {
   envVars: Record<string, string>;
   deployedUrl: string | null;
   isServerRunning: boolean;
+  // Oleg-specific selections (set after answering questions)
+  olegPlan: string | null;
+  olegOs: string | null;
+  olegRegion: string | null;
+  olegBilling: string | null;
+  // Server provisioning
+  serverIp: string | null;
+  serverStatus: 'none' | 'provisioning' | 'running';
+  // Console
+  consoleReady: boolean;
+  // Files
+  uploadedFiles: UploadedFile[];
+  // Project
+  projectRunning: boolean;
+  projectUrl: string | null;
+  projectType: 'node' | 'python' | 'docker' | 'generic' | null;
 }
 
 export interface AssistantState {
@@ -81,6 +113,13 @@ export interface AssistantState {
   selectedValues: Record<string, string>;
   spotlightTarget: string | null;
   appState: MockAppState;
+  navigateTo: string | null;
+  // Console sub-step tracking
+  consoleStepIndex: number;
+  // Run project sub-step tracking
+  runStepIndex: number;
+  // Tour sub-step tracking
+  tourStepIndex: number;
   // actions
   open: () => void;
   close: () => void;
@@ -90,6 +129,14 @@ export interface AssistantState {
   pushFeedItem: (item: Omit<FeedItem, 'id' | 'timestamp'>) => void;
   setSpotlight: (target: string | null) => void;
   startDeploy: () => void;
+  startProvision: () => void;
   resetAssistant: () => void;
   setSelectedValue: (key: string, value: string) => void;
+  clearNavigation: () => void;
+  advanceConsoleStep: () => void;
+  advanceRunStep: () => void;
+  advanceTourStep: () => void;
+  setUploadedFiles: (files: UploadedFile[]) => void;
+  removeFile: (name: string) => void;
+  removeFlaggedFiles: () => void;
 }

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useAssistantStore } from '../assistant/store';
 import minimumServerImg from '../assets/servers/minimum.png';
 import standardServerImg from '../assets/servers/standard.png';
 import balanceServerImg from '../assets/servers/balance.png';
@@ -243,6 +244,34 @@ export function BuildPage() {
     useState<string>('monthly');
   const [selectedRegionId, setSelectedRegionId] = useState<string>('by-minsk');
 
+  // Oleg assistant integration
+  const { appState, currentStepId } = useAssistantStore();
+  const { olegPlan, olegOs, olegRegion, olegBilling } = appState;
+
+  // Apply Oleg's selections to local state when they are set
+  useEffect(() => {
+    if (olegPlan) setSelectedPlanId(olegPlan);
+  }, [olegPlan]);
+  useEffect(() => {
+    if (olegOs) setSelectedOsId(olegOs);
+  }, [olegOs]);
+  useEffect(() => {
+    if (olegRegion) setSelectedRegionId(olegRegion);
+  }, [olegRegion]);
+  useEffect(() => {
+    if (olegBilling) setSelectedBillingCycleId(olegBilling === 'yearly' ? 'yearly' : 'monthly');
+  }, [olegBilling]);
+
+  // Scroll to Oleg-selected plan card
+  useEffect(() => {
+    if (olegPlan && plansGridRef.current) {
+      const el = plansGridRef.current.querySelector(`[data-plan-id="${olegPlan}"]`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  }, [olegPlan]);
+
+  const isOlegActive = currentStepId === 'build-config';
+
   const selectedPlan = PLANS.find((plan) => plan.id === selectedPlanId) ?? null;
   const selectedOs = OS_OPTIONS.find((os) => os.id === selectedOsId) ?? null;
   const selectedBillingCycle =
@@ -356,8 +385,20 @@ export function BuildPage() {
           <div className="build-explore-layout">
             <div className="build-plans-wrapper">
               <div className="build-plans-grid" ref={plansGridRef}>
-                {PLANS.map((plan) => (
-                  <article key={plan.id} className="build-plan-card">
+                {PLANS.map((plan) => {
+                  const isOlegPick = isOlegActive && olegPlan === plan.id;
+                  return (
+                  <article
+                    key={plan.id}
+                    className={`build-plan-card${isOlegPick ? ' oleg-selected-card' : ''}`}
+                    data-plan-id={plan.id}
+                    data-tour={isOlegPick ? 'oleg-plan-card' : undefined}
+                  >
+                    {isOlegPick && (
+                      <div style={{ padding: '6px 12px 0' }}>
+                        <span className="oleg-selected-badge">✦ Выбрано Олегом</span>
+                      </div>
+                    )}
                     <div className="build-plan-image-wrap">
                       <img
                         src={plan.image}
@@ -416,12 +457,13 @@ export function BuildPage() {
                             setSelectedOsId(null);
                           }}
                         >
-                          Выбрать
+                          {selectedPlanId === plan.id ? '✓ Выбрано' : 'Выбрать'}
                         </button>
                       </div>
                     </div>
                   </article>
-                ))}
+                  );
+                })}
               </div>
 
               <div className="build-plans-controls" aria-hidden="true">
@@ -493,10 +535,12 @@ export function BuildPage() {
 
               return cards.map((card) => {
                 const isActive = selectedOsId === card.id;
-                const className = [
+                const isOlegOsPick = isOlegActive && olegOs === card.id;
+                const classNames = [
                   'build-os-guide-card',
                   isActive ? 'build-os-guide-card-active' : '',
-                  isLocked ? 'build-os-guide-card-disabled' : ''
+                  isLocked ? 'build-os-guide-card-disabled' : '',
+                  isOlegOsPick ? 'oleg-selected-card' : '',
                 ]
                   .filter(Boolean)
                   .join(' ');
@@ -504,11 +548,12 @@ export function BuildPage() {
                 return (
                   <article
                     key={card.id}
-                    className={className}
+                    className={classNames}
                     role="button"
                     tabIndex={isLocked ? -1 : 0}
                     aria-pressed={isActive}
                     aria-disabled={isLocked}
+                    data-tour={isOlegOsPick ? 'oleg-os-card' : undefined}
                     onClick={() => handleSelect(card.id)}
                     onKeyDown={(event) => {
                       if (event.key === 'Enter' || event.key === ' ') {
@@ -517,6 +562,11 @@ export function BuildPage() {
                       }
                     }}
                   >
+                    {isOlegOsPick && (
+                      <div style={{ padding: '6px 12px 0' }}>
+                        <span className="oleg-selected-badge">✦ Выбрано Олегом</span>
+                      </div>
+                    )}
                     <div className="build-os-card-hero">
                       <div className="build-os-card-logo-wrap">
                         <img
@@ -549,7 +599,7 @@ export function BuildPage() {
                           disabled={isLocked}
                           onClick={() => handleSelect(card.id)}
                         >
-                          Выбрать
+                          {isActive ? '✓ Выбрано' : 'Выбрать'}
                         </button>
                       </div>
                     </div>
@@ -688,13 +738,13 @@ export function BuildPage() {
                 </p>
               </div>
 
-              <div className="build-summary-actions">
+              <div className="build-summary-actions" data-tour="build-continue">
                 <button
                   type="button"
                   className="build-plan-btn build-plan-btn-primary build-summary-pay-btn"
                   disabled={!selectedPlan || !selectedOs}
                 >
-                  Перейти к оплате
+                  {isOlegActive ? '✅ Оформить (выбрано Олегом)' : 'Перейти к оплате'}
                 </button>
               </div>
             </>

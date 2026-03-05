@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import './ServersPage.css';
 import './projects/ProjectsPages.css';
 import { useProjectsStore } from '../store/projectsStore';
+import { useAssistantStore } from '../assistant/store';
 import type { ProjectStatus, ProjectTemplate } from '../domain/iaasTypes';
 import iconProjects from '../assets/symbols/point.3.connected.trianglepath.dotted.svg';
 import iconServers from '../assets/symbols/server.rack.svg';
@@ -479,6 +480,127 @@ export function ServersPage() {
           )}
         </section>
       </div>
+      <SecurityTourSection />
     </section>
+  );
+}
+
+function SecurityTourSection() {
+  const { currentStepId } = useAssistantStore();
+  if (currentStepId !== 'security-tour') return null;
+
+  return (
+    <section style={{ padding: '24px', borderTop: '2px solid #FF0023', marginTop: '24px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#FF0023', animation: 'pulse 1.5s infinite' }} />
+        <h2 style={{ fontSize: '16px', fontWeight: '700', margin: '0', fontFamily: 'Unbounded, system-ui, sans-serif' }}>
+          Тур по безопасности
+        </h2>
+        <span style={{ fontSize: '10px', background: '#FF0023', color: '#fff', borderRadius: '4px', padding: '2px 8px', fontFamily: 'Unbounded, system-ui, sans-serif', fontWeight: '700' }}>
+          ОЛЕГ ВЕДЁТ
+        </span>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px' }}>
+        <SecurityCard
+          tourKey="tour-firewall"
+          icon="🔥"
+          title="Firewall / Порты"
+          status="Активен"
+          statusColor="#16a34a"
+          details={['Порт 22 (SSH): открыт', 'Порт 80 (HTTP): открыт', 'Порт 443 (HTTPS): открыт', 'Все остальные: закрыты']}
+        />
+        <SecurityCard
+          tourKey="tour-ssh"
+          icon="🔑"
+          title="SSH Ключи"
+          status="Защищено"
+          statusColor="#16a34a"
+          details={['Вход по паролю: отключён', 'Публичный ключ: добавлен', 'Root login: только ключ', 'Fail2Ban: активен']}
+        />
+        <SecurityCard
+          tourKey="tour-updates"
+          icon="🛡️"
+          title="Обновления"
+          status="Актуально"
+          statusColor="#16a34a"
+          details={['Ubuntu: 22.04.3 LTS', 'Последнее обновление: сегодня', 'Security patches: авто', 'Unattended-upgrades: вкл']}
+        />
+        <SecurityCard
+          tourKey="tour-monitoring"
+          icon="📊"
+          title="Мониторинг"
+          status="Работает"
+          statusColor="#16a34a"
+          details={['CPU: 12%', 'RAM: 34% / 4 ГБ', 'Disk: 8.2 ГБ / 50 ГБ', 'Uptime: 99.98%']}
+        />
+        <SecurityCard
+          tourKey="tour-logs"
+          icon="📋"
+          title="Логи"
+          status="Ведутся"
+          statusColor="#16a34a"
+          details={['Последний вход: только что', 'Неудачные попытки: 0', 'Системные события: норма', 'Хранение: 30 дней']}
+        />
+        <SecurityCard
+          tourKey="tour-backups"
+          icon="💾"
+          title="Резервные копии"
+          status="Настроено"
+          statusColor="#16a34a"
+          details={['Снапшоты: каждые 24ч', 'Хранятся: 7 дней', 'Последний: только что', 'Размер: 6.4 ГБ']}
+        />
+      </div>
+    </section>
+  );
+}
+
+interface SecurityCardProps {
+  tourKey: string;
+  icon: string;
+  title: string;
+  status: string;
+  statusColor: string;
+  details: string[];
+}
+
+function SecurityCard({ tourKey, icon, title, status, statusColor, details }: SecurityCardProps) {
+  return (
+    <div
+      data-tour={tourKey}
+      style={{
+        background: '#fff',
+        border: '1px solid #e5e5e5',
+        borderRadius: '12px',
+        padding: '16px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '18px' }}>{icon}</span>
+          <span style={{ fontSize: '12px', fontWeight: '700', fontFamily: 'Unbounded, system-ui, sans-serif' }}>{title}</span>
+        </div>
+        <span style={{
+          fontSize: '10px',
+          fontWeight: '700',
+          color: statusColor,
+          background: `${statusColor}15`,
+          padding: '2px 8px',
+          borderRadius: '20px',
+          fontFamily: 'Unbounded, system-ui, sans-serif',
+        }}>
+          {status}
+        </span>
+      </div>
+      <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        {details.map((d) => (
+          <li key={d} style={{ fontSize: '11px', color: '#55585f', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#e5e5e5', flexShrink: 0 }} />
+            {d}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

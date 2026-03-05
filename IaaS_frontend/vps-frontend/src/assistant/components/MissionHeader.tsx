@@ -1,4 +1,4 @@
-import { Rocket } from 'lucide-react';
+import { Bot } from 'lucide-react';
 import { useAssistantStore } from '../store';
 import type { ScenarioStep } from '../types';
 import { TOTAL_STEPS } from '../scenario';
@@ -17,11 +17,15 @@ export function MissionHeader({ step }: Props) {
     <div className="ass-header">
       <div className="ass-header-top">
         <div className="ass-header-icon">
-          <Rocket size={14} color="#fff" />
+          <Bot size={16} color="#fff" />
         </div>
-        <h2 className="ass-header-title">Launch Assistant</h2>
+        <div>
+          <h2 className="ass-header-title">
+            <span>Олег</span> • Помощник
+          </h2>
+        </div>
       </div>
-      <p className="ass-mission">Get your product running</p>
+      <p className="ass-mission">Доведу до запущенного продукта</p>
 
       <div className="ass-progress-row">
         <span className="ass-progress-label">
@@ -37,9 +41,9 @@ export function MissionHeader({ step }: Props) {
           type="button"
           className={`ass-mode-btn${mode === 'autopilot' ? ' active' : ''}`}
           onClick={toggleMode}
-          title={mode === 'autopilot' ? 'Переключить в Manual' : 'Переключить в Autopilot'}
+          title={mode === 'autopilot' ? 'Переключить в Ручной' : 'Переключить в Автопилот'}
         >
-          {mode === 'autopilot' ? '⚡ Auto' : '🎛 Manual'}
+          {mode === 'autopilot' ? '⚡ Авто' : '🎛 Ручной'}
         </button>
       </div>
     </div>
