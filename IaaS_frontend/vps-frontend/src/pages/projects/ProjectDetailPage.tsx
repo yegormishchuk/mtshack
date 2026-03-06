@@ -26,6 +26,7 @@ import { ProjectGraphTab } from './ProjectGraphTab';
 import { ProjectFilesTab } from './ProjectFilesTab';
 import { ProjectLaunchTab } from './ProjectLaunchTab';
 import { ProjectNetworkTab } from './ProjectNetworkTab';
+import { ProjectTerraformTab } from './ProjectTerraformTab';
 import { AIAssistantWidget } from '../../components/AIAssistantWidget';
 
 function useQuery() {
@@ -37,7 +38,8 @@ const TABS: { id: ProjectTab; label: string }[] = [
   { id: 'graph', label: 'Граф' },
   { id: 'files', label: 'Файлы' },
   { id: 'launch', label: 'Запуск' },
-  { id: 'network', label: 'Сеть' }
+  { id: 'network', label: 'Сеть' },
+  { id: 'terraform', label: 'Загрузить / Поделиться' },
 ];
 
 // ---------- Snapshot sub-component ----------
@@ -584,6 +586,8 @@ export function ProjectDetailPage() {
           {selectedTab === 'launch' && <ProjectLaunchTab project={project} />}
 
           {selectedTab === 'network' && <ProjectNetworkTab project={project} />}
+
+          {selectedTab === 'terraform' && <ProjectTerraformTab project={project} />}
         </section>
       </div>
       {/* Add Service Modal */}

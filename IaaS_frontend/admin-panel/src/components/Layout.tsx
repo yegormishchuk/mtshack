@@ -17,7 +17,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <div className="admin-header-inner">
           <div className="admin-brand">
             <div className="admin-brand-logo">
-              <span className="admin-brand-logo-text">A</span>
+              <img src="/icon.png" alt="IaaS" className="admin-brand-logo-img" />
             </div>
             <span className="admin-brand-name">IaaS</span>
             <span className="admin-badge">ADMIN</span>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Project, VM } from '../../domain/iaasTypes';
+import { useProjectsStore } from '../../store/projectsStore';
 
 interface LaunchCommand {
   cmd: string;
@@ -171,8 +172,10 @@ interface Props {
 
 export function ProjectLaunchTab({ project }: Props) {
   const vms = project.resources.vms;
+  const addToast = useProjectsStore((s) => s.addToast);
   const [selectedVmId, setSelectedVmId] = useState(vms[0]?.id ?? '');
   const [copiedCmd, setCopiedCmd] = useState<string | null>(null);
+  const [runningCmd, setRunningCmd] = useState<string | null>(null);
   const vm = vms.find((v) => v.id === selectedVmId);
   const phases = vm ? buildLaunchSteps(vm) : [];
 
@@ -180,6 +183,14 @@ export function ProjectLaunchTab({ project }: Props) {
     navigator.clipboard.writeText(cmd).catch(() => {});
     setCopiedCmd(cmd);
     setTimeout(() => setCopiedCmd(null), 1500);
+  };
+
+  const handleRun = (cmd: string) => {
+    setRunningCmd(cmd);
+    setTimeout(() => {
+      setRunningCmd(null);
+      addToast(`Команда выполнена: ${cmd.length > 48 ? cmd.slice(0, 48) + '…' : cmd}`);
+    }, 1000);
   };
 
   return (
@@ -231,6 +242,20 @@ export function ProjectLaunchTab({ project }: Props) {
                       aria-label="Скопировать команду"
                     >
                       {copiedCmd === item.cmd ? '✓' : 'Копировать'}
+                    </button>
+                    <button
+                      type="button"
+                      className="pl-copy-btn"
+                      disabled={runningCmd === item.cmd}
+                      onClick={() => handleRun(item.cmd)}
+                      aria-label="Выполнить команду"
+                      style={{
+                        background: runningCmd === item.cmd ? '#e5e7eb' : '#FF0023',
+                        color: runningCmd === item.cmd ? '#9ca3af' : '#fff',
+                        border: 'none',
+                      }}
+                    >
+                      {runningCmd === item.cmd ? '…' : 'Запустить'}
                     </button>
                   </div>
                 </div>

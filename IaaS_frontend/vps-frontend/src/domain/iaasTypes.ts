@@ -79,7 +79,7 @@ export interface Project {
   };
 }
 
-export type ProjectTab = 'overview' | 'graph' | 'files' | 'launch' | 'network';
+export type ProjectTab = 'overview' | 'graph' | 'files' | 'launch' | 'network' | 'terraform';
 
 export interface ProjectResources {
   project: Project;

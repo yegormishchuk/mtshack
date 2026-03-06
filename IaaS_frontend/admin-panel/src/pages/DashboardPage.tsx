@@ -21,7 +21,7 @@ function SparklineChart({
 }) {
   const W = 600;
   const H = height;
-  const PAD = { top: 6, bottom: 18, left: 4, right: 4 };
+  const PAD = { top: 6, bottom: 18, left: 32, right: 4 };
 
   if (points.length < 2) {
     return (
@@ -54,15 +54,26 @@ function SparklineChart({
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="spark-svg" preserveAspectRatio="none">
-      {/* Grid lines */}
+      {/* Grid lines + Y-axis labels */}
       {[0.25, 0.5, 0.75, 1].map((f) => {
         const y = PAD.top + (1 - f) * (H - PAD.top - PAD.bottom);
+        const val = vMin + f * (vMax - vMin);
+        const label = Number.isInteger(val) ? String(val) : val.toFixed(1);
         return (
-          <line
-            key={f}
-            x1={PAD.left} y1={y} x2={W - PAD.right} y2={y}
-            stroke="#f0f0f5" strokeWidth="1"
-          />
+          <g key={f}>
+            <line
+              x1={PAD.left} y1={y} x2={W - PAD.right} y2={y}
+              stroke="#f0f0f5" strokeWidth="1"
+            />
+            <text
+              x={PAD.left - 4} y={y + 3}
+              textAnchor="end"
+              fontSize="9"
+              fill="#aaaaaa"
+            >
+              {label}
+            </text>
+          </g>
         );
       })}
 
