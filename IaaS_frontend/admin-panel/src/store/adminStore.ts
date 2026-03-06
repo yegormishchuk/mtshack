@@ -183,6 +183,10 @@ interface AdminState {
   loadSnapshots(): Promise<void>;
   addToast(msg: string): void;
   clearToast(): void;
+  stopInstance(name: string): Promise<void>;
+  deleteInstance(name: string): Promise<void>;
+  stopProject(projectId: string): void;
+  deleteProject(projectId: string): Promise<void>;
 }
 
 export const useAdminStore = create<AdminState>((set, get) => ({
@@ -252,5 +256,135 @@ export const useAdminStore = create<AdminState>((set, get) => ({
 
   clearToast() {
     set({ toast: undefined });
+  },
+
+  async stopInstance(name) {
+    try {
+      await api.instanceAction(name, 'stop');
+      set((s) => {
+        if (!s.metrics) return {};
+        return {
+          metrics: {
+            ...s.metrics,
+            runningVMs: Math.max(0, s.metrics.runningVMs - 1),
+            stoppedVMs: s.metrics.stoppedVMs + 1,
+            instances: s.metrics.instances.map((i) =>
+              i.name === name ? { ...i, status: 'stopped' as VmStatus } : i
+            ),
+            projects: s.metrics.projects.map((p) => {
+              const inst = s.metrics!.instances.find((i) => i.name === name);
+              if (!inst || inst.projectId !== p.id) return p;
+              return {
+                ...p,
+                runningCount: Math.max(0, p.runningCount - 1),
+                stoppedCount: p.stoppedCount + 1,
+              };
+            }),
+          },
+        };
+      });
+      get().addToast(`Инстанс «${name}» остановлен`);
+    } catch (err) {
+      get().addToast(`Ошибка остановки: ${err instanceof Error ? err.message : name}`);
+    }
+  },
+
+  async deleteInstance(name) {
+    try {
+      await api.instanceAction(name, 'stop').catch(() => { /* ignore */ });
+      await api.deleteInstance(name);
+      set((s) => {
+        if (!s.metrics) return {};
+        const inst = s.metrics.instances.find((i) => i.name === name);
+        return {
+          metrics: {
+            ...s.metrics,
+            totalVMs: s.metrics.totalVMs - 1,
+            runningVMs: inst?.status === 'running' ? Math.max(0, s.metrics.runningVMs - 1) : s.metrics.runningVMs,
+            stoppedVMs: inst?.status === 'stopped' ? Math.max(0, s.metrics.stoppedVMs - 1) : s.metrics.stoppedVMs,
+            instances: s.metrics.instances.filter((i) => i.name !== name),
+            projects: s.metrics.projects.map((p) => {
+              if (!inst || inst.projectId !== p.id) return p;
+              return {
+                ...p,
+                vmCount: Math.max(0, p.vmCount - 1),
+                runningCount: inst.status === 'running' ? Math.max(0, p.runningCount - 1) : p.runningCount,
+                stoppedCount: inst.status === 'stopped' ? Math.max(0, p.stoppedCount - 1) : p.stoppedCount,
+                totalCpu: Math.max(0, p.totalCpu - inst.cpu),
+                totalRamMB: Math.max(0, p.totalRamMB - inst.ramMB),
+              };
+            }),
+          },
+          rawInstances: s.rawInstances.filter((i) => i.name !== name),
+        };
+      });
+      get().addToast(`Инстанс «${name}» удалён`);
+    } catch (err) {
+      get().addToast(`Ошибка удаления: ${err instanceof Error ? err.message : name}`);
+    }
+  },
+
+  stopProject(projectId) {
+    get().addToast(`Проект «${projectId}» успешно остановлен`);
+  },
+
+  async deleteProject(projectId) {
+    try {
+      // Fetch ALL instances from API (same as vps-frontend) to not miss any
+      let allRaw: RawAny[] = [];
+      try {
+        allRaw = (await api.listInstances()) as RawAny[];
+      } catch { /* fall back to local state */ }
+
+      // Identify by config tag OR name prefix — same logic as vps-frontend
+      const localNames = get().metrics?.instances
+        .filter((i) => i.projectId === projectId)
+        .map((i) => i.name) ?? [];
+
+      const apiNames = allRaw
+        .map((i) => String(i.name ?? ''))
+        .filter((name) => {
+          const cfg = (allRaw.find((i) => i.name === name) as any)?.config ?? {};
+          return (
+            cfg['user.project_network'] === projectId ||
+            name.startsWith(projectId + '-')
+          );
+        });
+
+      const allNames = [...new Set([...localNames, ...apiNames])].filter(Boolean);
+
+      // Delete each instance individually: stop → delete
+      for (const name of allNames) {
+        try { await api.instanceAction(name, 'stop'); } catch { /* ignore */ }
+        try { await api.deleteInstance(name); } catch { /* ignore */ }
+      }
+
+      // Delete the network after all instances
+      try { await api.deleteNetwork(projectId); } catch { /* ignore */ }
+
+      // Update local state
+      set((s) => {
+        if (!s.metrics) return {};
+        const removed = new Set(allNames);
+        const removedInst = s.metrics.instances.filter((i) => removed.has(i.name));
+        const runningRemoved = removedInst.filter((i) => i.status === 'running').length;
+        const stoppedRemoved = removedInst.filter((i) => i.status === 'stopped').length;
+        return {
+          metrics: {
+            ...s.metrics,
+            totalProjects: Math.max(0, s.metrics.totalProjects - 1),
+            totalVMs: Math.max(0, s.metrics.totalVMs - removedInst.length),
+            runningVMs: Math.max(0, s.metrics.runningVMs - runningRemoved),
+            stoppedVMs: Math.max(0, s.metrics.stoppedVMs - stoppedRemoved),
+            instances: s.metrics.instances.filter((i) => !removed.has(i.name)),
+            projects: s.metrics.projects.filter((p) => p.id !== projectId),
+          },
+          rawInstances: s.rawInstances.filter((i) => !removed.has(String(i.name))),
+        };
+      });
+      get().addToast(`Проект «${projectId}» удалён`);
+    } catch (err) {
+      get().addToast(`Ошибка удаления проекта: ${err instanceof Error ? err.message : projectId}`);
+    }
   },
 }));

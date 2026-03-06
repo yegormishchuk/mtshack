@@ -3,6 +3,41 @@ import { useAdminStore } from '../store/adminStore';
 import type { ProjectSummary } from '../store/adminStore';
 import './ProjectsPage.css';
 
+function ProjectActions({ project }: { project: ProjectSummary }) {
+  const stopProject = useAdminStore((s) => s.stopProject);
+  const deleteProject = useAdminStore((s) => s.deleteProject);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleStop = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    stopProject(project.id);
+  };
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm(`Удалить проект «${project.name}» и все его инстансы (${project.vmCount} шт.)? Это необратимо.`)) return;
+    setDeleting(true);
+    await deleteProject(project.id);
+    setDeleting(false);
+  };
+
+  return (
+    <div className="proj-actions">
+      <button className="proj-action-btn proj-action-stop" onClick={handleStop} title="Остановить проект">
+        ■ Стоп
+      </button>
+      <button
+        className="proj-action-btn proj-action-delete"
+        onClick={(e) => { void handleDelete(e); }}
+        disabled={deleting}
+        title="Удалить проект"
+      >
+        {deleting ? '...' : '✕ Удалить'}
+      </button>
+    </div>
+  );
+}
+
 type SortKey = 'name' | 'vmCount' | 'runningCount' | 'totalCpu' | 'totalRamMB';
 
 function VmBar({ running, stopped, provisioning }: { running: number; stopped: number; provisioning: number }) {
@@ -99,6 +134,7 @@ function ProjectCard({ project }: { project: ProjectSummary }) {
           )}
         </div>
       </div>
+      <ProjectActions project={project} />
     </div>
   );
 }
@@ -210,6 +246,7 @@ export function ProjectsPage() {
             <div className="ptable-th">RAM (GB)</div>
             <div className="ptable-th">Подсеть</div>
             <div className="ptable-th">Доступность</div>
+            <div className="ptable-th">Действия</div>
           </div>
           {filtered.map((p) => {
             const healthPct =
@@ -235,6 +272,9 @@ export function ProjectsPage() {
                 <div className="ptable-cell ptable-mono">{p.cidr}</div>
                 <div className="ptable-cell">
                   <span style={{ color: healthColor, fontWeight: 700 }}>{healthPct}%</span>
+                </div>
+                <div className="ptable-cell">
+                  <ProjectActions project={p} />
                 </div>
               </div>
             );

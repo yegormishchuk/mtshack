@@ -3,6 +3,47 @@ import { useAdminStore } from '../store/adminStore';
 import type { InstanceSummary, VmStatus } from '../store/adminStore';
 import './InstancesPage.css';
 
+function InstanceActions({ inst }: { inst: InstanceSummary }) {
+  const stopInstance = useAdminStore((s) => s.stopInstance);
+  const deleteInstance = useAdminStore((s) => s.deleteInstance);
+  const [stopping, setStopping] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleStop = async () => {
+    setStopping(true);
+    await stopInstance(inst.name);
+    setStopping(false);
+  };
+
+  const handleDelete = async () => {
+    if (!confirm(`Удалить инстанс «${inst.name}»? Это действие необратимо.`)) return;
+    setDeleting(true);
+    await deleteInstance(inst.name);
+    setDeleting(false);
+  };
+
+  return (
+    <div className="inst-actions">
+      <button
+        className="inst-action-btn inst-action-stop"
+        disabled={stopping || deleting || inst.status === 'stopped'}
+        onClick={() => { void handleStop(); }}
+        title="Остановить"
+      >
+        {stopping ? '...' : '■ Стоп'}
+      </button>
+      <button
+        className="inst-action-btn inst-action-delete"
+        disabled={stopping || deleting}
+        onClick={() => { void handleDelete(); }}
+        title="Удалить"
+      >
+        {deleting ? '...' : '✕ Удалить'}
+      </button>
+    </div>
+  );
+}
+
 const STATUS_COLOR: Record<VmStatus, string> = {
   running: '#22C55E',
   stopped: '#6B7280',
@@ -191,6 +232,7 @@ export function InstancesPage() {
             <div className="inst-th">IP адрес</div>
             <div className="inst-th">Ресурсы</div>
             <div className="inst-th">Диск</div>
+            <div className="inst-th">Действия</div>
           </div>
           <div className="inst-table-body">
             {filtered.map((inst) => {
@@ -230,6 +272,9 @@ export function InstancesPage() {
                   </div>
                   <div className="inst-disk-cell">
                     <span className="inst-disk">20 GB</span>
+                  </div>
+                  <div className="inst-actions-cell">
+                    <InstanceActions inst={inst} />
                   </div>
                 </div>
               );

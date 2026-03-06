@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { path: '/projects', label: 'Проекты', end: false },
   { path: '/instances', label: 'Инстансы', end: false },
   { path: '/snapshots', label: 'Снапшоты', end: false },
+  { path: '/users', label: 'Пользователи', end: false },
 ] as const;
 
 export function Layout({ children }: { children: ReactNode }) {
