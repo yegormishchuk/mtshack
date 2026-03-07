@@ -76,11 +76,10 @@ export function LocalPanel({ fs, onDragStart }: LocalPanelProps) {
       <input
         ref={fs.dirInputRef}
         type="file"
-        // @ts-expect-error - webkitdirectory is non-standard
-        webkitdirectory="true"
         multiple
         style={{ display: 'none' }}
         onChange={fs.onFileInputChange}
+        {...({ webkitdirectory: '' } as React.InputHTMLAttributes<HTMLInputElement>)}
       />
 
       <Toolbar
