@@ -2,7 +2,6 @@ import type {
   FileKind,
   RemoteApiInterface,
   RemoteItem,
-  UploadManifest,
 } from './types';
 
 // ── Helpers ──────────────────────────────────────────────────────
@@ -143,7 +142,7 @@ const MOCK_FS: Record<string, (serverId: string) => RemoteItem[]> = {
     makeFile(s, 'db-2026-03-02.sql.gz', '/opt/backups', 46_200_000, 2, '-rw-r--r--'),
     makeFile(s, 'db-2026-03-03.sql.gz', '/opt/backups', 44_800_000, 1, '-rw-r--r--'),
   ],
-  '/tmp': (s) => [],
+  '/tmp': () => [],
 };
 
 // ── Mock preview content ──────────────────────────────────────────
@@ -163,7 +162,7 @@ export const mockApi: RemoteApiInterface = {
     return factory(serverId);
   },
 
-  async previewRemote(serverId, path, _offset, _limit) {
+  async previewRemote(_serverId, path, _offset, _limit) {
     await delay(150 + Math.random() * 200);
     if (MOCK_PREVIEWS[path]) return MOCK_PREVIEWS[path];
     const name = path.split('/').pop() ?? '';

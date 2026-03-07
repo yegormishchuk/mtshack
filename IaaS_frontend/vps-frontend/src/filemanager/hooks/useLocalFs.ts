@@ -91,8 +91,8 @@ export interface UseLocalFsReturn {
   openFilePicker: () => void;
   openDirPicker: () => void;
   clear: () => void;
-  fileInputRef: React.RefObject<HTMLInputElement | null>;
-  dirInputRef: React.RefObject<HTMLInputElement | null>;
+  fileInputRef: React.RefObject<HTMLInputElement>;
+  dirInputRef: React.RefObject<HTMLInputElement>;
   onFileInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
@@ -106,8 +106,8 @@ export function useLocalFs(): UseLocalFsReturn {
   const [isDragOver, setIsDragOver] = useState(false);
   const lastSelected = useRef<string | null>(null);
 
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const dirInputRef = useRef<HTMLInputElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dirInputRef = useRef<HTMLInputElement>(null);
 
   const addFiles = useCallback((files: FileList | File[]) => {
     const arr = Array.from(files);

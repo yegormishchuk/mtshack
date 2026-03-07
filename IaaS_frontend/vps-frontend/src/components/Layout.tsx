@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import logoSrc from '../assets/logo.png';
+import logoSrc from '../assets/icon.png';
 import './Layout.css';
 import { Toast } from './Toast';
 

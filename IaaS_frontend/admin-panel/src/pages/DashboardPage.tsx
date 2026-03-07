@@ -42,16 +42,6 @@ function SparklineChart({
   const toX = (t: number) => PAD.left + ((t - tMin) / tRange) * (W - PAD.left - PAD.right);
   const toY = (v: number) => PAD.top + (1 - (v - vMin) / (vMax - vMin)) * (H - PAD.top - PAD.bottom);
 
-  const labelTime = (t: number) => {
-    const d = new Date(t);
-    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-  };
-
-  const tickCount = Math.min(points.length, 6);
-  const tickIdxs = Array.from({ length: tickCount }, (_, i) =>
-    Math.round((i / (tickCount - 1)) * (points.length - 1))
-  );
-
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="spark-svg" preserveAspectRatio="none">
       {/* Grid lines + Y-axis labels */}
@@ -109,22 +99,6 @@ function SparklineChart({
         );
       })}
 
-      {/* Time labels */}
-      {tickIdxs.map((idx) => {
-        const p = points[idx];
-        const x = toX(p.timestamp);
-        return (
-          <text
-            key={idx}
-            x={x} y={H - 2}
-            textAnchor="middle"
-            fontSize="9"
-            fill="#aaaaaa"
-          >
-            {labelTime(p.timestamp)}
-          </text>
-        );
-      })}
     </svg>
   );
 }
